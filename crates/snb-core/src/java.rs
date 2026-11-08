@@ -752,12 +752,13 @@ mod tests {
     fn zip_extraction_and_executable_lookup() {
         let dir = tempfile::tempdir().unwrap();
         let archive_path = dir.path().join("jre.zip");
+        let java_name = if cfg!(windows) { "java.exe" } else { "java" };
         {
             let file = File::create(&archive_path).unwrap();
             let mut zip = zip::ZipWriter::new(file);
             use zip::write::SimpleFileOptions;
             let options = SimpleFileOptions::default();
-            zip.start_file("jre-21/bin/java", options).unwrap();
+            zip.start_file(format!("jre-21/bin/{java_name}"), options).unwrap();
             zip.write_all(b"#!/bin/sh\n").unwrap();
             zip.start_file("jre-21/release", options).unwrap();
             zip.write_all(b"JAVA_VERSION=\"21\"").unwrap();
@@ -767,7 +768,7 @@ mod tests {
         extract_java_archive(&archive_path, &extracted).unwrap();
         assert!(extracted.join("jre-21/release").is_file());
         let java = find_java_executable(&extracted).unwrap();
-        assert_eq!(java.file_name().unwrap(), "java");
+        assert_eq!(java.file_name().and_then(|name| name.to_str()), Some(java_name));
     }
 
     #[test]

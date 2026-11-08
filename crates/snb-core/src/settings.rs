@@ -213,10 +213,18 @@ impl Settings {
 mod tests {
     use super::*;
 
+    fn test_game_dir() -> String {
+        if cfg!(windows) {
+            r"C:\Users\player\.skyandbeyond".to_string()
+        } else {
+            "/home/player/.skyandbeyond".to_string()
+        }
+    }
+
     fn valid() -> Settings {
         Settings {
             username: "Steve".to_string(),
-            game_dir: "/home/player/.skyandbeyond".to_string(),
+            game_dir: test_game_dir(),
             ..Settings::default()
         }
     }
@@ -249,7 +257,7 @@ mod tests {
         assert_eq!(settings.validate(16_384).unwrap_err().code(), "game_dir_is_vanilla");
         settings.game_dir = "relative/path".to_string();
         assert_eq!(settings.validate(16_384).unwrap_err().code(), "game_dir_not_absolute");
-        settings.game_dir = "/home/player/.skyandbeyond".to_string();
+        settings.game_dir = test_game_dir();
         assert!(settings.validate(16_384).is_ok());
     }
 
