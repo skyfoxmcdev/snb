@@ -36,6 +36,11 @@ function humanError(error: unknown): string {
   return "unknown_error";
 }
 
+function installError(error: InstallReport["error"]): string {
+  if (!error) return "unknown_error";
+  return error.detail ? `${error.code} · ${error.detail}` : error.code;
+}
+
 export default function App() {
   const [boot, setBoot] = useState<Bootstrap | null>(null);
   const [loading, setLoading] = useState(true);
@@ -208,7 +213,7 @@ export default function App() {
     try {
       const report = await invoke<InstallReport>("install_game", { repair });
       setInstallReport(report);
-      if (!report.ready && report.error) setError(report.error.code);
+      if (!report.ready && report.error) setError(installError(report.error));
       if (report.ready) await refresh(true);
     } catch (cause) {
       setError(humanError(cause));
@@ -517,6 +522,11 @@ export default function App() {
                   <div className="stage-notice">
                     <span className="status-dot status-dot--offline" aria-hidden="true" />
                     <span>{error}</span>
+                    {installReport?.error && !installReport.ready && !installing && (
+                      <button type="button" className="text-link" onClick={() => void runInstall(true)}>
+                        {t("repair")}
+                      </button>
+                    )}
                   </div>
                 )}
                 {maintenanceMessage && (
