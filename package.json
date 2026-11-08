@@ -1,0 +1,33 @@
+{
+  "name": "sky-and-beyond-launcher",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Official Sky & Beyond Minecraft launcher",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "tauri": "tauri",
+    "icons": "node scripts/generate-icons.mjs && tauri icon src-tauri/icons/source.png -o src-tauri/icons",
+    "sidecar": "node scripts/build-sidecar.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/manrope": "5.3.0",
+    "@tauri-apps/api": "2.12.4",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.4",
+    "@types/node": "^22.0.0",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "@vitejs/plugin-react": "5.0.4",
+    "typescript": "5.9.3",
+    "vite": "6.4.1",
+    "vitest": "3.2.4"
+  }
+}

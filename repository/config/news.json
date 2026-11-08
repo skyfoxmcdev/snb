@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "launch",
+      "title": {
+        "en": "The sky is open",
+        "fr": "Le ciel est ouvert"
+      },
+      "summary": {
+        "en": "Install the launcher and join Sky & Beyond from the main menu.",
+        "fr": "Installez le launcher et rejoignez Sky & Beyond depuis le menu principal."
+      },
+      "body": {
+        "en": "AutoModpack synchronises the server modpack when you connect. Keep the launcher open while playing.",
+        "fr": "AutoModpack synchronise le modpack du serveur lorsque vous vous connectez. Gardez le launcher ouvert pendant le jeu."
+      },
+      "imageUrl": null,
+      "publishedAt": "2026-11-07T12:00:00Z",
+      "link": null,
+      "pinned": true
+    }
+  ]
+}

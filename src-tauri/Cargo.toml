@@ -1,0 +1,23 @@
+[package]
+name = "sky-and-beyond-launcher"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+description = "Official Sky & Beyond Minecraft launcher"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+snb-core = { path = "../crates/snb-core" }
+rfd = "0.15"
+opener = "0.7"
+memory-stats = "1"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+toml = "0.8"
+base64 = "0.22"

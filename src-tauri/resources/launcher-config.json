@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "remoteBaseUrl": "https://skyfoxmcdev.github.io/snb/",
+  "minecraft": {
+    "version": "1.21.1",
+    "manifestUrl": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
+  },
+  "neoforge": {
+    "version": "21.1.248",
+    "mavenBase": "https://maven.neoforged.net/releases/"
+  },
+  "javaMajor": 21,
+  "adoptiumApiBase": "https://api.adoptium.net/v3/assets/latest/21/hotspot",
+  "automodpack": {
+    "version": "4.0.7",
+    "url": "https://github.com/Skidamek/AutoModpack/releases/download/v4.0.7/automodpack-mc1.21.1-neoforge-4.0.7.jar",
+    "sha256": "c76ac8e4c754ba39d1baee3a8ac146be9bfddfad58fa10cc48527d4accd47ce7",
+    "fileName": "automodpack-mc1.21.1-neoforge-4.0.7.jar"
+  },
+  "update": {
+    "channel": "stable",
+    "publicKey": ""
+  },
+  "serverEntryName": "Sky & Beyond",
+  "backupFolderName": "snb-backups"
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "endpoint": {
+    "host": "change-me.at.playit.gg",
+    "port": 25565
+  },
+  "displayName": "Sky & Beyond",
+  "description": {
+    "en": "A skyblock adventure beyond the clouds.",
+    "fr": "Une aventure skyblock au-delà des nuages."
+  },
+  "maintenance": false,
+  "maintenanceMessage": {
+    "en": "The server is under maintenance. Please check back soon.",
+    "fr": "Le serveur est en maintenance. Revenez bientôt."
+  },
+  "info": [
+    {
+      "label": { "en": "Version", "fr": "Version" },
+      "value": { "en": "Minecraft 1.21.1", "fr": "Minecraft 1.21.1" }
+    }
+  ]
+}

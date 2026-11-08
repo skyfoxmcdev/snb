@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "latestVersion": "0.1.0",
+  "minimumVersion": "0.1.0",
+  "notes": {
+    "en": "Welcome to the new Sky & Beyond launcher.",
+    "fr": "Bienvenue dans le nouveau launcher Sky & Beyond."
+  },
+  "announcements": [
+    {
+      "id": "welcome",
+      "level": "info",
+      "title": {
+        "en": "Welcome to Sky & Beyond",
+        "fr": "Bienvenue sur Sky & Beyond"
+      },
+      "body": {
+        "en": "The launcher installs everything automatically. Your server address is kept up to date.",
+        "fr": "Le launcher installe tout automatiquement. L'adresse du serveur reste à jour."
+      },
+      "dismissible": true
+    }
+  ],
+  "buttons": [
+    {
+      "id": "website",
+      "label": { "en": "Website", "fr": "Site web" },
+      "url": "https://example.com/",
+      "icon": "external",
+      "style": "secondary"
+    }
+  ],
+  "links": {
+    "discord": "https://discord.gg/change-me",
+    "website": "https://example.com/",
+    "support": "https://example.com/support"
+  },
+  "maintenance": {
+    "active": false,
+    "message": {
+      "en": "Launcher maintenance in progress.",
+      "fr": "Maintenance du launcher en cours."
+    }
+  }
+}

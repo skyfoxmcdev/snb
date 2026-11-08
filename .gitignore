@@ -1,0 +1,18 @@
+node_modules/
+dist/
+target/
+.tmp/
+*.log
+.DS_Store
+Thumbs.db
+src-tauri/binaries/*
+!src-tauri/binaries/.gitkeep
+src-tauri/resources/snb-updater*
+.env
+.env.local
+
+# Local build outputs and agent workspace
+artifacts/
+.freebuff/
+*.pem
+*.key

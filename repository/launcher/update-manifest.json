@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "version": "0.1.0",
+  "minimumVersion": "0.1.0",
+  "mandatory": true,
+  "releasedAt": "2026-11-08T13:01:10.734Z",
+  "notes": {
+    "en": "Initial Sky & Beyond launcher release.",
+    "fr": "Version initiale du launcher Sky & Beyond."
+  },
+  "platforms": {
+    "windows-x86_64": {
+      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.0/Sky-and-Beyond_0.1.0_x64-setup.exe",
+      "sha256": "a386d6eeaf0bfab8650ce2468db6357c0a7c562ffda1ee3fcc1bb22fb2450329",
+      "size": 8378683,
+      "signature": null,
+      "fileName": "Sky-and-Beyond_0.1.0_x64-setup.exe"
+    }
+  }
+}

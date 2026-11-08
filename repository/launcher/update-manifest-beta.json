@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "version": "0.1.0",
+  "minimumVersion": "0.1.0",
+  "mandatory": true,
+  "releasedAt": "2026-11-07T12:00:00Z",
+  "notes": {
+    "en": "Beta channel placeholder. Replace before publishing a beta.",
+    "fr": "Emplacement beta. À remplacer avant de publier une beta."
+  },
+  "platforms": {
+    "windows-x86_64": {
+      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.0/Sky-and-Beyond_0.1.0_x64-setup.exe",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "size": 1,
+      "signature": null,
+      "fileName": "Sky-and-Beyond_0.1.0_x64-setup.exe"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "logoUrl": "/branding/logo.png",
+  "backgroundUrl": "/branding/background.png",
+  "bannerUrl": null,
+  "playerIconUrl": "/branding/player.png",
+  "tagline": {
+    "en": "The sky is only the beginning.",
+    "fr": "Le ciel n'est qu'un début."
+  },
+  "colors": {
+    "background": "#050910",
+    "surface": "#0d1421",
+    "text": "#eef4ff",
+    "muted": "#8c9ab2",
+    "border": "#253247",
+    "primary": "#9fb3ff",
+    "secondary": "#65d8e6",
+    "accent": "#ffd398"
+  },
+  "lightColors": {
+    "background": "#eef3fa",
+    "surface": "#ffffff",
+    "text": "#122033",
+    "muted": "#5b6b82",
+    "border": "#c9d6e6",
+    "primary": "#4f67c8",
+    "secondary": "#168f9e",
+    "accent": "#9a6500"
+  },
+  "backgroundOverlay": 0.55
+}
