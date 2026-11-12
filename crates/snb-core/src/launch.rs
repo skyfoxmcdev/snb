@@ -87,12 +87,28 @@ fn classpath_separator() -> &'static str {
     }
 }
 
+/// NeoForge's JVM arguments use `${version_name}` to identify the game JAR
+/// that must be ignored on the module path, for example
+/// `-DignoreList=client-extra,1.21.1.jar`. Game arguments still receive the
+/// launched profile ID (such as `neoforge-21.1.248`).
+fn version_name_replacements(
+    replacements: &HashMap<String, String>,
+    version_name: &str,
+) -> HashMap<String, String> {
+    let mut result = replacements.clone();
+    result.insert("version_name".to_string(), version_name.to_string());
+    result
+}
+
 fn validate_launch_inputs(paths: &GamePaths, version: &ResolvedVersion) -> AppResult<()> {
     let broken = broken_installation(paths, version);
     if !broken.is_empty() {
         return Err(AppError::with_detail(
             "installation_incomplete",
-            format!("{} installation file(s) are missing or unverified", broken.len()),
+            format!(
+                "{} installation file(s) are missing or unverified",
+                broken.len()
+            ),
         ));
     }
     Ok(())
@@ -114,7 +130,9 @@ pub fn build_launch_plan(
     }
     let java = inspect_java(java_path, "launch")?;
     if java.major != runtime.java_major {
-        return Err(AppError::new("java_version_mismatch").param("actual", java.major.to_string()).param("required", runtime.java_major.to_string()));
+        return Err(AppError::new("java_version_mismatch")
+            .param("actual", java.major.to_string())
+            .param("required", runtime.java_major.to_string()));
     }
     let version_id = profile_id(runtime);
     let version = resolve_version(paths, &version_id)?;
@@ -160,8 +178,14 @@ pub fn build_launch_plan(
         ("game_directory", paths.root.to_string_lossy().to_string()),
         ("assets_root", paths.assets.to_string_lossy().to_string()),
         ("assets_index_name", index.id.clone()),
-        ("natives_directory", paths.natives.to_string_lossy().to_string()),
-        ("library_directory", paths.libraries.to_string_lossy().to_string()),
+        (
+            "natives_directory",
+            paths.natives.to_string_lossy().to_string(),
+        ),
+        (
+            "library_directory",
+            paths.libraries.to_string_lossy().to_string(),
+        ),
         ("classpath", classpath.join(classpath_separator())),
         ("classpath_separator", classpath_separator().to_string()),
         ("launcher_name", "SkyAndBeyond".to_string()),
@@ -189,23 +213,24 @@ pub fn build_launch_plan(
     ];
     if let Some(logging) = &version.logging {
         if let Some(path) = logging_config_path(paths, logging) {
-            jvm_arguments.push(logging.client.argument.replace("${path}", &path.to_string_lossy()));
+            jvm_arguments.push(
+                logging
+                    .client
+                    .argument
+                    .replace("${path}", &path.to_string_lossy()),
+            );
         }
     }
+    let jvm_replacements = version_name_replacements(&replacements, &version.jar_version);
     jvm_arguments.extend(collect_arguments(
         &arguments.jvm,
         &features,
-        &replacements,
+        &jvm_replacements,
         true,
     )?);
     let mut custom_jvm = split_args(&settings.jvm_args);
     jvm_arguments.append(&mut custom_jvm);
-    let mut game_arguments = collect_arguments(
-        &arguments.game,
-        &features,
-        &replacements,
-        true,
-    )?;
+    let mut game_arguments = collect_arguments(&arguments.game, &features, &replacements, true)?;
     let mut custom_game = split_args(&settings.game_args);
     game_arguments.append(&mut custom_game);
     apply_fullscreen(&paths.root, settings.fullscreen)?;
@@ -277,6 +302,21 @@ mod tests {
             substitute("--username ${auth_player_name}", &map),
             "--username Steve"
         );
+    }
+
+    #[test]
+    fn jvm_version_name_uses_game_jar_version() {
+        let mut replacements = HashMap::new();
+        replacements.insert("version_name".to_string(), "neoforge-21.1.248".to_string());
+        let jvm = version_name_replacements(&replacements, "1.21.1");
+        assert_eq!(jvm.get("version_name").map(String::as_str), Some("1.21.1"));
+        assert_eq!(
+            replacements.get("version_name").map(String::as_str),
+            Some("neoforge-21.1.248")
+        );
+        let argument = Argument::Plain("-DignoreList=client-extra,${version_name}.jar".to_string());
+        let result = collect_arguments(&[argument], &HashMap::new(), &jvm, true).unwrap();
+        assert_eq!(result, vec!["-DignoreList=client-extra,1.21.1.jar"]);
     }
 
     #[test]

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -59,6 +59,8 @@ export default function App() {
   const [updating, setUpdating] = useState(false);
   const [updateProgress, setUpdateProgress] = useState<{ current: number; total: number } | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updatedVersion, setUpdatedVersion] = useState<string | null>(null);
+  const updateNoticeShown = useRef(false);
   const [worlds, setWorlds] = useState<string[]>([]);
   const [selectedWorld, setSelectedWorld] = useState("");
   const [copied, setCopied] = useState(false);
@@ -87,6 +89,10 @@ export default function App() {
         setBoot(payload);
         setError(null);
         if (payload.updateRunId) {
+          if (!updateNoticeShown.current) {
+            updateNoticeShown.current = true;
+            setUpdatedVersion(payload.launcherVersion);
+          }
           void invoke("mark_update_ready").catch(() => undefined);
         }
         setOnboardName((current) => current || payload.settings.username);
@@ -243,6 +249,12 @@ export default function App() {
       setUpdating(false);
     }
   };
+
+  useEffect(() => {
+    if (!updatedVersion) return;
+    const timer = window.setTimeout(() => setUpdatedVersion(null), 10000);
+    return () => window.clearTimeout(timer);
+  }, [updatedVersion]);
 
   useEffect(() => {
     if (library !== "mods") return;
@@ -415,6 +427,23 @@ export default function App() {
           onMaximize={toggleMaximize}
           onClose={closeWindow}
         />
+
+        {updatedVersion && (
+          <div className="update-toast" role="status" aria-live="polite">
+            <span className="status-dot status-dot--online" aria-hidden="true" />
+            <span>
+              {t("updatedTo")} <strong>v{updatedVersion}</strong>
+            </span>
+            <button
+              type="button"
+              className="update-toast-close"
+              aria-label={t("close")}
+              onClick={() => setUpdatedVersion(null)}
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {boot.update?.required && (
           <UpdateGate
