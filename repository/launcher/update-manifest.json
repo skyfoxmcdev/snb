@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "version": "0.1.0",
-  "minimumVersion": "0.1.0",
+  "version": "0.1.1",
+  "minimumVersion": "0.1.1",
   "mandatory": true,
-  "releasedAt": "2026-11-08T13:01:10.734Z",
+  "releasedAt": "2026-11-12T18:59:20Z",
   "notes": {
-    "en": "Initial Sky & Beyond launcher release.",
-    "fr": "Version initiale du launcher Sky & Beyond."
+    "en": "Fixes Minecraft startup on NeoForge 1.21.1 and confirms successful launcher updates.",
+    "fr": "Corrige le démarrage de Minecraft sous NeoForge 1.21.1 et confirme les mises à jour du launcher."
   },
   "platforms": {
     "windows-x86_64": {
-      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.0/Sky-and-Beyond_0.1.0_x64-setup.exe",
-      "sha256": "a386d6eeaf0bfab8650ce2468db6357c0a7c562ffda1ee3fcc1bb22fb2450329",
-      "size": 8378683,
+      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.1/Sky-and-Beyond_0.1.1_x64-setup.exe",
+      "sha256": "98aaf7b78d8a4faf1db2b060adf560b027b3f9adc77432df0bf52394e03841bc",
+      "size": 8362069,
       "signature": null,
-      "fileName": "Sky-and-Beyond_0.1.0_x64-setup.exe"
+      "fileName": "Sky-and-Beyond_0.1.1_x64-setup.exe"
     }
   }
 }
