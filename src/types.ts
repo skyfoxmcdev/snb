@@ -2,6 +2,7 @@ export type Lang = "fr" | "en";
 export type Localized = string | { en?: string; fr?: string };
 
 export interface Settings {
+  schemaVersion: number;
   username: string;
   gameDir: string;
   javaPath: string;

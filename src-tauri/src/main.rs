@@ -258,11 +258,18 @@ async fn install_game(app: AppHandle, state: State<'_, AppState>, repair: bool) 
     })
     .await
     .map_err(|error| UserError::with_detail("installation_failed", error.to_string()))?;
+    // The install only owns the detected Java path: writing its whole start-up
+    // snapshot back would undo preferences changed while it was running.
+    let merged = {
+        let mut current = current_settings(&state);
+        current.java_path = working.java_path.clone();
+        current
+    };
     if let Ok(mut current) = state.settings.lock() {
-        *current = working.clone();
+        *current = merged.clone();
     }
-    let _ = save_settings_file(&state, &working);
-    let _ = &working;
+    let _ = save_settings_file(&state, &merged);
+    let _ = app.emit("settings-changed", &merged);
     state.installing.store(false, Ordering::SeqCst);
     let _ = app.emit("install-finished", &result);
     Ok(result)
@@ -352,6 +359,9 @@ fn open_settings_window(app: AppHandle) -> Result<(), UserError> {
     let _ = window.unminimize();
     let _ = window.show();
     let _ = window.set_focus();
+    // The settings window stays warm while hidden, so ask it to reload the
+    // current preferences instead of saving a stale start-up snapshot back.
+    let _ = app.emit("settings-refresh", ());
     Ok(())
 }
 

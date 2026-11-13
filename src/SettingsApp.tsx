@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -8,6 +8,7 @@ import { IconClose } from "./ui/Icons";
 import "./styles.css";
 
 interface Settings {
+  schemaVersion: number;
   username: string; gameDir: string; javaPath: string; language: string; theme: string;
   minMemoryMb: number; maxMemoryMb: number; width: number; height: number; fullscreen: boolean;
   jvmArgs: string; gameArgs: string; autoInstallJava: boolean; autoBackup: boolean;
@@ -83,6 +84,41 @@ const copy = {
 
 type Section = "profile" | "launcher" | "java" | "performance" | "display" | "backups" | "folders" | "about";
 
+function MemoryField({
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  onChange: (value: number) => void;
+}) {
+  const [text, setText] = useState(String(value));
+
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
+
+  return (
+    <input
+      type="number"
+      inputMode="numeric"
+      min={min}
+      max={max}
+      step={512}
+      value={text}
+      onChange={(event) => {
+        setText(event.target.value);
+        const parsed = Number.parseInt(event.target.value, 10);
+        if (Number.isFinite(parsed)) onChange(parsed);
+      }}
+      onBlur={() => setText(String(value))}
+    />
+  );
+}
+
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (value: boolean) => void; label: string }) {
   return (
     <button
@@ -103,20 +139,42 @@ export default function SettingsApp() {
   const [error, setError] = useState("");
   const [repair, setRepair] = useState<InstallReport | null>(null);
   const [section, setSection] = useState<Section>("profile");
+  const unsaved = useRef(false);
 
   const lang = draft?.language === "fr" ? "fr" : draft?.language === "en" ? "en" : navigator.language.startsWith("fr") ? "fr" : "en";
   const t = (key: keyof typeof copy.en) => copy[lang][key] || copy.en[key];
 
+  const load = async () => {
+    try {
+      const payload = await invoke<Bootstrap>("bootstrap");
+      setBoot(payload);
+      setDraft(payload.settings);
+      setError("");
+      unsaved.current = false;
+    } catch (cause: any) {
+      setError(cause?.detail || cause?.code || String(cause));
+    }
+  };
+
   useEffect(() => {
-    invoke<Bootstrap>("bootstrap")
-      .then((payload) => {
-        setBoot(payload);
-        setDraft(payload.settings);
+    void load();
+    const unInstall = listen<InstallReport>("install-progress", (event) => setRepair(event.payload));
+    // This window stays mounted while hidden; reload whenever it is reopened.
+    const unRefresh = listen("settings-refresh", () => {
+      void load();
+    });
+    let unFocus: (() => void) | undefined;
+    void getCurrentWindow()
+      .onFocusChanged(({ payload: focused }) => {
+        if (focused && !unsaved.current) void load();
       })
-      .catch((cause) => setError(String(cause)));
-    const un = listen<InstallReport>("install-progress", (event) => setRepair(event.payload));
+      .then((fn) => {
+        unFocus = fn;
+      });
     return () => {
-      void un.then((fn) => fn());
+      void unInstall.then((fn) => fn());
+      void unRefresh.then((fn) => fn());
+      unFocus?.();
     };
   }, []);
 
@@ -132,7 +190,10 @@ export default function SettingsApp() {
     document.documentElement.lang = lang;
   }, [draft?.theme, lang]);
 
-  const patch = (values: Partial<Settings>) => setDraft((current) => (current ? { ...current, ...values } : current));
+  const patch = (values: Partial<Settings>) => {
+    unsaved.current = true;
+    setDraft((current) => (current ? { ...current, ...values } : current));
+  };
 
   const save = async () => {
     if (!draft) return;
@@ -141,6 +202,7 @@ export default function SettingsApp() {
       if (boot && draft.username !== boot.settings.username && !confirm(t("usernameConfirm"))) return;
       const saved = await invoke<Settings>("save_settings", { settings: draft });
       setDraft(saved);
+      unsaved.current = false;
       setBoot((current) => (current ? { ...current, settings: saved } : current));
       setStatus(t("saved"));
       window.setTimeout(() => setStatus(""), 2500);
@@ -335,12 +397,11 @@ export default function SettingsApp() {
               <div className="settings-row">
                 <div className="settings-row-label"><strong>{t("min")}</strong></div>
                 <div className="settings-control">
-                  <input
-                    type="number"
+                  <MemoryField
+                    value={draft.minMemoryMb}
                     min={512}
                     max={32768}
-                    value={draft.minMemoryMb}
-                    onChange={(event) => patch({ minMemoryMb: Number(event.target.value) })}
+                    onChange={(value) => patch({ minMemoryMb: value })}
                   />
                 </div>
               </div>
@@ -348,12 +409,11 @@ export default function SettingsApp() {
               <div className="settings-row">
                 <div className="settings-row-label"><strong>{t("max")}</strong></div>
                 <div className="settings-control">
-                  <input
-                    type="number"
+                  <MemoryField
+                    value={draft.maxMemoryMb}
                     min={1024}
                     max={32768}
-                    value={draft.maxMemoryMb}
-                    onChange={(event) => patch({ maxMemoryMb: Number(event.target.value) })}
+                    onChange={(value) => patch({ maxMemoryMb: value })}
                   />
                 </div>
               </div>
