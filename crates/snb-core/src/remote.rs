@@ -583,6 +583,22 @@ mod tests {
         )
     }
 
+    /// Windows tears down the loopback socket used by the fixture server
+    /// occasionally (WSAECONNABORTED) when the host recycles ephemeral ports.
+    /// Retry those transport hiccups so they are not reported as configuration
+    /// failures; every assertion below still checks the real outcome.
+    fn load_retrying(loader: &RemoteLoader) -> RemoteSnapshot {
+        let mut snapshot = loader.load();
+        for _ in 0..6 {
+            if !snapshot.warnings.iter().any(|warning| warning.code == "network_error") {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(40));
+            snapshot = loader.load();
+        }
+        snapshot
+    }
+
     fn serve_all(server: &TestServer, server_config: String) {
         server.set("/config/server.json", server_config);
         server.set("/config/launcher.json", launcher_json());
@@ -596,7 +612,7 @@ mod tests {
         serve_all(&http, server_json("skyandbeyond.playit.gg", 25565));
         let dir = tempfile::tempdir().unwrap();
         let loader = RemoteLoader::new(&http.base_url(), dir.path(), true, logger(dir.path())).unwrap();
-        let snapshot = loader.load();
+        let snapshot = load_retrying(&loader);
         assert!(snapshot.online);
         assert!(!snapshot.from_cache);
         assert_eq!(
@@ -615,11 +631,11 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let loader = RemoteLoader::new(&http.base_url(), dir.path(), true, logger(dir.path())).unwrap();
         assert_eq!(
-            loader.load().server.endpoint.unwrap().port,
+            load_retrying(&loader).server.endpoint.unwrap().port,
             25565
         );
         serve_all(&http, server_json("new-endpoint.playit.gg", 25600));
-        let snapshot = loader.load();
+        let snapshot = load_retrying(&loader);
         let endpoint = snapshot.server.endpoint.unwrap();
         assert_eq!(endpoint.host, "new-endpoint.playit.gg");
         assert_eq!(endpoint.port, 25600);
@@ -631,9 +647,9 @@ mod tests {
         serve_all(&http, server_json("skyandbeyond.playit.gg", 25565));
         let dir = tempfile::tempdir().unwrap();
         let loader = RemoteLoader::new(&http.base_url(), dir.path(), true, logger(dir.path())).unwrap();
-        assert!(loader.load().online);
+        assert!(load_retrying(&loader).online);
         drop(http);
-        let snapshot = loader.load();
+        let snapshot = load_retrying(&loader);
         assert!(!snapshot.online);
         assert!(snapshot.from_cache);
         assert_eq!(
@@ -654,7 +670,7 @@ mod tests {
         http.set("/config/news.json", "{ this is not json");
         let dir = tempfile::tempdir().unwrap();
         let loader = RemoteLoader::new(&http.base_url(), dir.path(), true, logger(dir.path())).unwrap();
-        let snapshot = loader.load();
+        let snapshot = load_retrying(&loader);
         assert!(!snapshot.online);
         assert_eq!(snapshot.sources.news.kind, "default");
         assert_eq!(snapshot.sources.server.kind, "remote");
@@ -675,7 +691,7 @@ mod tests {
         serve_all(&http, payload);
         let dir = tempfile::tempdir().unwrap();
         let loader = RemoteLoader::new(&http.base_url(), dir.path(), true, logger(dir.path())).unwrap();
-        let snapshot = loader.load();
+        let snapshot = load_retrying(&loader);
         assert!(snapshot
             .warnings
             .iter()
@@ -689,12 +705,12 @@ mod tests {
         serve_all(&http, server_json("skyandbeyond.playit.gg", 25565));
         let dir = tempfile::tempdir().unwrap();
         let loader = RemoteLoader::new(&http.base_url(), dir.path(), true, logger(dir.path())).unwrap();
-        assert!(loader.load().server.endpoint.is_some());
+        assert!(load_retrying(&loader).server.endpoint.is_some());
         serve_all(
             &http,
             r#"{"schemaVersion":1,"displayName":"Sky & Beyond"}"#.to_string(),
         );
-        let snapshot = loader.load();
+        let snapshot = load_retrying(&loader);
         assert_eq!(
             snapshot.server.endpoint.as_ref().unwrap().address(),
             "skyandbeyond.playit.gg:25565"
@@ -713,7 +729,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let base = format!("http://127.0.0.1:{port}/");
         let loader = RemoteLoader::new(&base, dir.path(), true, logger(dir.path())).unwrap();
-        let snapshot = loader.load();
+        let snapshot = load_retrying(&loader);
         assert!(!snapshot.online);
         assert!(!snapshot.from_cache);
         assert_eq!(snapshot.sources.server.kind, "default");
@@ -727,7 +743,7 @@ mod tests {
         serve_all(&http, server_json("skyandbeyond.playit.gg", 25565));
         let dir = tempfile::tempdir().unwrap();
         let loader = RemoteLoader::new(&http.base_url(), dir.path(), true, logger(dir.path())).unwrap();
-        loader.load();
+        load_retrying(&loader);
         drop(http);
         let refresh = loader.refresh_endpoint();
         assert_eq!(
@@ -747,4 +763,5 @@ mod tests {
         assert!(RemoteLoader::new("https://example.com/", dir.path(), false, logger(dir.path())).is_ok());
         assert!(RemoteLoader::new("file:///etc/", dir.path(), true, logger(dir.path())).is_err());
     }
+
 }

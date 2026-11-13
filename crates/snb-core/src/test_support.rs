@@ -51,7 +51,11 @@ impl TestServer {
                     Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
                         thread::sleep(Duration::from_millis(4));
                     }
-                    Err(_) => break,
+                    // A pending connection can be reset before it is accepted
+                    // (frequent on Windows loopback). Treat every error other
+                    // than a shutdown as transient: one aborted handshake must
+                    // not stop this server from answering later requests.
+                    Err(_) => thread::sleep(Duration::from_millis(4)),
                 }
             }
         });
@@ -192,4 +196,11 @@ fn handle_connection(
     let _ = stream.write_all(response.as_bytes());
     let _ = stream.write_all(&body);
     let _ = stream.flush();
+    // Close gracefully: half-close the write side and drain whatever the client
+    // still has in flight. Dropping the socket with unread bytes makes Windows
+    // reset the connection (WSAECONNABORTED) instead of closing it.
+    let _ = stream.shutdown(std::net::Shutdown::Write);
+    let _ = stream.set_read_timeout(Some(Duration::from_millis(200)));
+    let mut sink = [0u8; 512];
+    while matches!(stream.read(&mut sink), Ok(read) if read > 0) {}
 }
