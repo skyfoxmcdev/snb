@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "latestVersion": "0.1.1",
-  "minimumVersion": "0.1.1",
+  "latestVersion": "0.1.2",
+  "minimumVersion": "0.1.2",
   "notes": {
-    "en": "Launcher 0.1.1 fixes Minecraft startup and adds a confirmation after automatic updates.",
-    "fr": "Le launcher 0.1.1 corrige le démarrage de Minecraft et ajoute une confirmation après les mises à jour automatiques."
+    "en": "Fixes the startup error that asked you to retry, shows the real Sky & Beyond logo throughout, and smooths the transition from the loading screen into the main menu.",
+    "fr": "Corrige l'erreur au démarrage qui demandait de réessayer, affiche le vrai logo Sky & Beyond partout et adoucit la transition entre l'écran de chargement et le menu principal."
   },
   "announcements": [
     {

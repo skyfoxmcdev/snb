@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "version": "0.1.1",
-  "minimumVersion": "0.1.1",
+  "version": "0.1.2",
+  "minimumVersion": "0.1.2",
   "mandatory": true,
-  "releasedAt": "2026-11-12T18:59:20Z",
+  "releasedAt": "2026-11-13T15:03:31Z",
   "notes": {
-    "en": "Fixes Minecraft startup on NeoForge 1.21.1 and confirms successful launcher updates.",
-    "fr": "Corrige le démarrage de Minecraft sous NeoForge 1.21.1 et confirme les mises à jour du launcher."
+    "en": "Fixes the startup error that asked you to retry, shows the real Sky & Beyond logo throughout, and smooths the transition from the loading screen into the main menu.",
+    "fr": "Corrige l'erreur au démarrage qui demandait de réessayer, affiche le vrai logo Sky & Beyond partout et adoucit la transition entre l'écran de chargement et le menu principal."
   },
   "platforms": {
     "windows-x86_64": {
-      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.1/Sky-and-Beyond_0.1.1_x64-setup.exe",
-      "sha256": "98aaf7b78d8a4faf1db2b060adf560b027b3f9adc77432df0bf52394e03841bc",
-      "size": 8362069,
+      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.2/Sky-and-Beyond_0.1.2_x64-setup.exe",
+      "sha256": "cf71b5262c0bcfb261f8414b6cc838abbaf058f407d5509f3af3fb046d06043d",
+      "size": 8404988,
       "signature": null,
-      "fileName": "Sky-and-Beyond_0.1.1_x64-setup.exe"
+      "fileName": "Sky-and-Beyond_0.1.2_x64-setup.exe"
     }
   }
 }
