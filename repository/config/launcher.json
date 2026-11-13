@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "latestVersion": "0.1.2",
-  "minimumVersion": "0.1.2",
+  "latestVersion": "0.1.3",
+  "minimumVersion": "0.1.3",
   "notes": {
-    "en": "Fixes the startup error that asked you to retry, shows the real Sky & Beyond logo throughout, and smooths the transition from the loading screen into the main menu.",
-    "fr": "Corrige l'erreur au démarrage qui demandait de réessayer, affiche le vrai logo Sky & Beyond partout et adoucit la transition entre l'écran de chargement et le menu principal."
+    "en": "Fixes the Settings window that rewrote your profile and restarted onboarding, and ships a 4 GB / 8 GB memory allocation by default.",
+    "fr": "Corrige la fenêtre Paramètres qui réécrivait votre profil et relançait l'installation, et alloue 4 Go / 8 Go de mémoire par défaut."
   },
   "announcements": [
     {
