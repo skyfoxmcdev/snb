@@ -1,7 +1,7 @@
 {
   "name": "sky-and-beyond-launcher",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Official Sky & Beyond Minecraft launcher",
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "tauri": "tauri",
-    "icons": "node scripts/generate-icons.mjs && tauri icon src-tauri/icons/source.png -o src-tauri/icons",
+    "icons": "tauri icon public/branding/logo.png -o src-tauri/icons",
     "sidecar": "node scripts/build-sidecar.mjs"
   },
   "dependencies": {

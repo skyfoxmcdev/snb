@@ -1022,6 +1022,14 @@ fn main() {
                 install_cancel: Arc::new(AtomicBool::new(false)),
                 update_run_id,
             });
+            // The windows are declared with `create: false` in tauri.conf.json and
+            // are built here, so a webview can only load once the state above is
+            // registered. Creating them earlier let the frontend call `bootstrap`
+            // before `manage()` had run, which rejected the first command of the
+            // session with "state not managed for field state" and forced a retry.
+            for window_config in app.config().app.windows.clone() {
+                tauri::WebviewWindowBuilder::from_config(app.handle(), &window_config)?.build()?;
+            }
             Ok(())
         })
         .on_window_event(|window, event| {

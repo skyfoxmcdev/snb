@@ -69,6 +69,8 @@ export default function App() {
   const [serverOpen, setServerOpen] = useState(false);
   const [mojang, setMojang] = useState<MojangState>("unknown");
   const [mojangChecked, setMojangChecked] = useState(false);
+  const [splashVisible, setSplashVisible] = useState(true);
+  const [splashLeaving, setSplashLeaving] = useState(false);
 
   const settings = boot?.settings;
   const lang: Lang =
@@ -161,6 +163,14 @@ export default function App() {
     }
     document.documentElement.lang = lang;
   }, [boot, lang]);
+
+  // Fade the splash out over the main menu instead of unmounting it in one frame.
+  useEffect(() => {
+    if (!boot || !splashVisible) return;
+    setSplashLeaving(true);
+    const timer = window.setTimeout(() => setSplashVisible(false), 520);
+    return () => window.clearTimeout(timer);
+  }, [boot, splashVisible]);
 
   useEffect(() => {
     if (!boot || mojangChecked) return;
@@ -354,7 +364,7 @@ export default function App() {
       <div className="launcher">
         <div className="splash">
           <div className="splash-inner">
-            <BrandMark size={46} />
+            <BrandMark logoUrl={brandingDefaults.logoUrl} size={46} />
             <p className="menu-eyebrow">Sky &amp; Beyond</p>
             <h1>{t("loading")}</h1>
           </div>
@@ -368,7 +378,7 @@ export default function App() {
       <div className="launcher">
         <div className="splash">
           <div className="splash-inner splash-inner--error">
-            <BrandMark size={46} />
+            <BrandMark logoUrl={brandingDefaults.logoUrl} size={46} />
             <h1>{t("fatal")}</h1>
             <p className="splash-detail">{error}</p>
             <button type="button" className="solid-button" onClick={() => void refresh()}>
@@ -420,7 +430,7 @@ export default function App() {
         dimmed={needsOnboarding || Boolean(boot.update?.required)}
       />
 
-      <div className="app-shell">
+      <div className="app-shell app-shell--enter">
         <TitleBar
           title="Sky & Beyond Launcher"
           onMinimize={minimizeWindow}
@@ -722,6 +732,19 @@ export default function App() {
           </>
         )}
       </div>
+
+      {splashVisible && (
+        <div
+          className={`splash splash--overlay${splashLeaving ? " splash--leaving" : ""}`}
+          aria-hidden="true"
+        >
+          <div className="splash-inner">
+            <BrandMark logoUrl={brandingDefaults.logoUrl} size={46} />
+            <p className="menu-eyebrow">Sky &amp; Beyond</p>
+            <h1>{t("loading")}</h1>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

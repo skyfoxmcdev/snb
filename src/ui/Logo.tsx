@@ -42,7 +42,7 @@ export function BrandMark({
         alt={name}
         width={size}
         height={size}
-        style={{ width: size, height: size, objectFit: "cover", borderRadius: "50%" }}
+        style={{ width: size, height: size, objectFit: "cover", borderRadius: "22%" }}
         onError={() => setFailed(true)}
       />
     );
