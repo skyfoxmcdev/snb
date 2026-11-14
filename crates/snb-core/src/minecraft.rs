@@ -592,10 +592,18 @@ fn load_asset_index(paths: &GamePaths, index: &AssetIndexRef) -> AppResult<Asset
 
 fn build_asset_jobs(paths: &GamePaths, file: &AssetIndexFile) -> AppResult<Vec<AssetJob>> {
     let mut jobs = Vec::with_capacity(file.objects.len());
+    let mut seen: HashSet<String> = HashSet::new();
     for object in file.objects.values() {
         let hash = object.hash.to_ascii_lowercase();
         if hash.len() != 40 || !hash.chars().all(|c| c.is_ascii_hexdigit()) {
             return Err(AppError::new("asset_index_invalid"));
+        }
+        // The index repeats some hashes under several logical names (23 of them
+        // in 1.21.1). Only one file per hash can exist under assets/objects, so
+        // counting each entry would make the completion marker claim more files
+        // than are possible and leave the installation "assets_missing" forever.
+        if !seen.insert(hash.clone()) {
+            continue;
         }
         let relative = format!("{}/{}", &hash[..2], hash);
         let destination = safe_join(&paths.asset_objects, Path::new(&relative))?;
@@ -628,11 +636,25 @@ pub fn assets_ready(paths: &GamePaths, index: &AssetIndexRef) -> bool {
     else {
         return false;
     };
-    marker.schema_version == ASSET_INDEX_SCHEMA_VERSION
-        && marker.index_id == index.id
-        && marker.index_sha1.eq_ignore_ascii_case(&index.sha1)
-        && asset_index_path(paths, index).is_file()
-        && count_asset_files(paths) >= marker.object_count
+    if marker.schema_version != ASSET_INDEX_SCHEMA_VERSION
+        || marker.index_id != index.id
+        || !marker.index_sha1.eq_ignore_ascii_case(&index.sha1)
+    {
+        return false;
+    }
+    // The index is authoritative for how many object files must exist: it lists
+    // 23 duplicate hashes in 1.21.1, and markers written before those were
+    // collapsed stored one count per entry, which no installation can match.
+    let Ok(file) = load_asset_index(paths, index) else {
+        return false;
+    };
+    let required = file
+        .objects
+        .values()
+        .map(|object| object.hash.to_ascii_lowercase())
+        .collect::<HashSet<_>>()
+        .len() as u64;
+    count_asset_files(paths) >= required
 }
 
 fn missing_asset_bytes(jobs: &[AssetJob]) -> u64 {
@@ -1082,8 +1104,18 @@ mod tests {
         fs::create_dir_all(&paths.managed).unwrap();
         fs::create_dir_all(&paths.asset_indexes).unwrap();
         fs::create_dir_all(paths.asset_objects.join("aa")).unwrap();
-        fs::write(paths.asset_indexes.join("17.json"), b"{}").unwrap();
-        fs::write(paths.asset_objects.join("aa/hash"), b"x").unwrap();
+        fs::write(
+            paths.asset_indexes.join("17.json"),
+            r#"{"objects":{"minecraft/sounds/a.ogg":{"hash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size":1}}}"#,
+        )
+        .unwrap();
+        fs::write(
+            paths
+                .asset_objects
+                .join("aa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+            b"x",
+        )
+        .unwrap();
         let index = AssetIndexRef {
             id: "17".to_string(),
             sha1: "abc".to_string(),
@@ -1095,14 +1127,38 @@ mod tests {
             schema_version: 1,
             index_id: "17".to_string(),
             index_sha1: "abc".to_string(),
-            object_count: 1,
+            // Stale over-count written by 0.1.3 and earlier: it must no longer
+            // keep a complete installation blocked.
+            object_count: 3913,
             total_size: 1,
             completed_at_ms: now_ms(),
         };
         fs::write(marker_path(&paths), serde_json::to_vec(&marker).unwrap()).unwrap();
         assert!(assets_ready(&paths, &index));
-        fs::remove_file(paths.asset_objects.join("aa/hash")).unwrap();
+        fs::remove_file(
+            paths
+                .asset_objects
+                .join("aa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        )
+        .unwrap();
         assert!(!assets_ready(&paths, &index));
+    }
+
+    #[test]
+    fn duplicated_asset_hashes_count_once() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = paths(dir.path());
+        let file: AssetIndexFile = serde_json::from_str(
+            r#"{"objects":{
+                "minecraft/sounds/a.ogg":{"hash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size":10},
+                "minecraft/sounds/a_copy.ogg":{"hash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size":10},
+                "minecraft/sounds/b.ogg":{"hash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","size":20}
+            }}"#,
+        )
+        .unwrap();
+        let jobs = build_asset_jobs(&paths, &file).unwrap();
+        assert_eq!(jobs.len(), 2);
+        assert_eq!(jobs.iter().map(|job| job.size).sum::<u64>(), 30);
     }
 
     #[test]
