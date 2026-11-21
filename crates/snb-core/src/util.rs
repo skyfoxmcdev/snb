@@ -22,6 +22,45 @@ pub fn now_ms() -> u64 {
         .unwrap_or(0)
 }
 
+/// Total physical memory of the machine, in MiB.
+///
+/// `memory_stats::memory_stats` reports this process's own working set, so it
+/// must never be used to size a Minecraft allocation: on a 16 GiB machine it
+/// returns a few MiB, which would clamp every saved allocation to the floor.
+/// Returns `None` when the platform cannot report it, and callers then apply no
+/// cap at all.
+pub fn total_physical_memory_mb() -> Option<u64> {
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::System::SystemInformation::{
+            GlobalMemoryStatusEx, MEMORYSTATUSEX,
+        };
+        let mut status = MEMORYSTATUSEX {
+            dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32,
+            ..unsafe { std::mem::zeroed() }
+        };
+        if unsafe { GlobalMemoryStatusEx(&mut status) } == 0 {
+            return None;
+        }
+        return Some(status.ullTotalPhys / 1024 / 1024);
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let text = fs::read_to_string("/proc/meminfo").ok()?;
+        for line in text.lines() {
+            if let Some(rest) = line.strip_prefix("MemTotal:") {
+                let kb: u64 = rest.trim().trim_end_matches("kB").trim().parse().ok()?;
+                return Some(kb / 1024);
+            }
+        }
+        return None;
+    }
+    #[cfg(not(any(windows, target_os = "linux")))]
+    {
+        None
+    }
+}
+
 pub fn file_modified_ms(path: &Path) -> u64 {
     fs::metadata(path)
         .and_then(|m| m.modified())

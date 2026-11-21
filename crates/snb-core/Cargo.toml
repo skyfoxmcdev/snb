@@ -19,7 +19,6 @@ flate2 = "1"
 tar = "0.4"
 walkdir = "2"
 fs2 = "0.4"
-memory-stats = "1"
 dirs = "5"
 toml = "0.8"
 base64 = "0.22"
@@ -31,3 +30,6 @@ libc = "0.2"
 
 [dev-dependencies]
 tempfile = "3"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_System_SystemInformation"] }

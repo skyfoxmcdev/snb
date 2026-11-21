@@ -2312,16 +2312,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "memory-stats"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c73f5c649995a115e1a0220b35e4df0a1294500477f97a91d0660fb5abeb574a"
-dependencies = [
- "libc",
- "windows-sys 0.52.0",
-]
-
-[[package]]
 name = "mime"
 version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3754,10 +3744,9 @@ checksum = "33f4fe9184a62d842c9ef383018f3306d8ba224fd9d836f56d7288308847c256"
 
 [[package]]
 name = "sky-and-beyond-launcher"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "base64 0.22.1",
- "memory-stats",
  "opener",
  "rfd",
  "serde",
@@ -3783,7 +3772,7 @@ checksum = "149309498a5f7334b12ddae0cad8aba81ce785fe91755068867e017cf98fee46"
 
 [[package]]
 name = "snb-core"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "base64 0.22.1",
  "dirs 5.0.1",
@@ -3792,7 +3781,6 @@ dependencies = [
  "fs2",
  "libc",
  "md-5",
- "memory-stats",
  "regex",
  "reqwest 0.12.28",
  "semver",
@@ -3805,12 +3793,13 @@ dependencies = [
  "toml 0.8.2",
  "url",
  "walkdir",
+ "windows-sys 0.59.0",
  "zip",
 ]
 
 [[package]]
 name = "snb-updater"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "serde",
  "serde_json",

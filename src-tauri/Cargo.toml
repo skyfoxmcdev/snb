@@ -17,7 +17,6 @@ serde_json = { workspace = true }
 snb-core = { path = "../crates/snb-core" }
 rfd = "0.15"
 opener = "0.7"
-memory-stats = "1"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 toml = "0.8"
 base64 = "0.22"

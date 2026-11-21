@@ -172,8 +172,16 @@ impl Settings {
         if !matches!(self.theme.as_str(), "dark" | "light" | "system") {
             return Err(AppError::new("theme_unsupported"));
         }
-        if self.min_memory_mb < MIN_MEMORY_MB {
-            return Err(AppError::new("memory_min_too_low").param("minMb", MIN_MEMORY_MB.to_string()));
+        // A machine smaller than the shipped range cannot provide the floor, so
+        // the floor is the smaller of the shipped minimum and the machine's RAM.
+        let system_cap = if total_memory_mb > 0 {
+            total_memory_mb.min(u32::MAX as u64) as u32
+        } else {
+            u32::MAX
+        };
+        let min_allowed = MIN_MEMORY_MB.min(system_cap);
+        if self.min_memory_mb < min_allowed {
+            return Err(AppError::new("memory_min_too_low").param("minMb", min_allowed.to_string()));
         }
         if self.max_memory_mb < self.min_memory_mb {
             return Err(AppError::new("memory_max_below_min"));
@@ -303,6 +311,15 @@ mod tests {
         legacy.normalize_loaded(2_048);
         assert_eq!(legacy.min_memory_mb, 2_048);
         assert_eq!(legacy.max_memory_mb, 2_048);
+    }
+
+    #[test]
+    fn a_machine_smaller_than_the_shipped_range_still_saves() {
+        let mut settings = Settings::default();
+        settings.normalize_loaded(3_900);
+        assert_eq!(settings.min_memory_mb, 3_900);
+        assert_eq!(settings.max_memory_mb, 3_900);
+        assert!(settings.validate(3_900).is_ok());
     }
 
     #[test]

@@ -16,6 +16,7 @@ interface Settings {
 }
 interface Bootstrap {
   settings: Settings;
+  totalMemoryMb: number;
   launcherVersion: string;
   runtime: { javaMajor: number; minecraft: { version: string }; neoforge: { version: string } };
   remote?: { appearance?: { logoUrl?: string | null } };
@@ -45,7 +46,7 @@ const copy = {
     dark: "Sombre", light: "Clair", system: "Système", french: "Français", english: "English",
     ledeLauncher: "Langue, thème et dossier d'installation.",
     ledeJava: "Le runtime Java 21 utilisé pour lancer Minecraft.",
-    ledePerformance: "Mémoire allouée (4096 à 8192 Mo) et arguments de la JVM.",
+    ledePerformance: "Mémoire allouée et arguments de la JVM.",
     ledeDisplay: "Fenêtre du jeu et arguments Minecraft.",
     ledeBackups: "Sauvegardes automatiques des mondes.",
     ledeFolders: "Accès direct aux dossiers de l'instance.",
@@ -73,7 +74,7 @@ const copy = {
     dark: "Dark", light: "Light", system: "System", french: "Français", english: "English",
     ledeLauncher: "Language, theme and installation folder.",
     ledeJava: "The Java 21 runtime used to start Minecraft.",
-    ledePerformance: "Allocated memory (4096 to 8192 MB) and JVM arguments.",
+    ledePerformance: "Allocated memory and JVM arguments.",
     ledeDisplay: "Game window and Minecraft arguments.",
     ledeBackups: "Automatic world backups.",
     ledeFolders: "Direct access to the instance folders.",
@@ -156,6 +157,14 @@ export default function SettingsApp() {
 
   const lang = draft?.language === "fr" ? "fr" : draft?.language === "en" ? "en" : navigator.language.startsWith("fr") ? "fr" : "en";
   const t = (key: keyof typeof copy.en) => copy[lang][key] || copy.en[key];
+
+  // The backend clamps to min(shipped maximum, real RAM); the fields must show
+  // and enforce the same bounds, otherwise a small machine saves a value the
+  // window never displays.
+  const memoryCeiling = boot?.totalMemoryMb && boot.totalMemoryMb > 0
+    ? Math.min(MAX_MEMORY_MB, boot.totalMemoryMb)
+    : MAX_MEMORY_MB;
+  const memoryFloor = Math.min(MIN_MEMORY_MB, memoryCeiling);
 
   const load = async () => {
     try {
@@ -408,12 +417,15 @@ export default function SettingsApp() {
               <p className="settings-lede">{t("ledePerformance")}</p>
 
               <div className="settings-row">
-                <div className="settings-row-label"><strong>{t("min")}</strong></div>
+                <div className="settings-row-label">
+                  <strong>{t("min")}</strong>
+                  <span>{memoryFloor} – {memoryCeiling} Mo</span>
+                </div>
                 <div className="settings-control">
                   <MemoryField
                     value={draft.minMemoryMb}
-                    min={MIN_MEMORY_MB}
-                    max={Math.max(draft.maxMemoryMb, MIN_MEMORY_MB)}
+                    min={memoryFloor}
+                    max={Math.max(draft.maxMemoryMb, memoryFloor)}
                     onChange={(value) => patch({ minMemoryMb: value })}
                   />
                 </div>
@@ -424,8 +436,8 @@ export default function SettingsApp() {
                 <div className="settings-control">
                   <MemoryField
                     value={draft.maxMemoryMb}
-                    min={Math.min(draft.minMemoryMb, MAX_MEMORY_MB)}
-                    max={MAX_MEMORY_MB}
+                    min={Math.min(draft.minMemoryMb, memoryCeiling)}
+                    max={memoryCeiling}
                     onChange={(value) => patch({ maxMemoryMb: value })}
                   />
                 </div>

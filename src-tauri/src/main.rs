@@ -52,6 +52,7 @@ struct PathsSummary {
 struct BootstrapPayload {
     launcher_version: String,
     settings: Settings,
+    total_memory_mb: u64,
     runtime: RuntimeConfig,
     remote: RemoteSnapshot,
     readiness: ReadinessReport,
@@ -151,6 +152,7 @@ async fn bootstrap(state: State<'_, AppState>) -> Result<BootstrapPayload, UserE
     Ok(BootstrapPayload {
         launcher_version: env!("CARGO_PKG_VERSION").to_string(),
         settings,
+        total_memory_mb: snb_core::util::total_physical_memory_mb().unwrap_or(0),
         runtime: (*runtime).clone(),
         remote: snapshot,
         readiness,
@@ -170,9 +172,8 @@ async fn bootstrap(state: State<'_, AppState>) -> Result<BootstrapPayload, UserE
 
 #[tauri::command]
 fn save_settings(app: AppHandle, state: State<'_, AppState>, mut settings: Settings) -> Result<Settings, UserError> {
-    let total = memory_stats::memory_stats()
-        .map(|stats| (stats.physical_mem / 1024 / 1024) as u64)
-        .unwrap_or(0);
+    // The machine's real RAM, never this process's working set.
+    let total = snb_core::util::total_physical_memory_mb().unwrap_or(0);
     settings.normalize_loaded(total);
     settings.validate(total).map_err(user)?;
     save_settings_file(&state, &settings)?;
@@ -1007,9 +1008,7 @@ fn main() {
             let settings_file = data_dir.join("settings.json");
             let mut settings = snb_core::util::read_json::<Settings>(&settings_file).unwrap_or_default();
             let stored = settings.clone();
-            let total = memory_stats::memory_stats()
-                .map(|stats| (stats.physical_mem / 1024 / 1024) as u64)
-                .unwrap_or(0);
+            let total = snb_core::util::total_physical_memory_mb().unwrap_or(0);
             settings.normalize_loaded(total);
             // Write a normalised file straight away, so an old 1 GiB allocation
             // is corrected on disk before the player ever opens Settings.
