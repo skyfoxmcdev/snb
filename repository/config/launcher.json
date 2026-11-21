@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "latestVersion": "0.1.5",
-  "minimumVersion": "0.1.5",
+  "latestVersion": "0.1.6",
+  "minimumVersion": "0.1.6",
   "notes": {
-    "en": "Fixes the Java memory allocation that snapped back to 1024 MB after saving, and enforces the 4096-8192 MB range.",
-    "fr": "Corrige l'allocation de mémoire Java qui revenait à 1024 Mo après l'enregistrement et applique la plage 4096-8192 Mo."
+    "en": "Fixes the memory setting that was capped to 1024 MB and rejected with memory_min_too_low: the launcher now reads the real amount of RAM instead of its own working set, so 4096-8192 MB saves normally.",
+    "fr": "Corrige le réglage de mémoire bloqué à 1024 Mo et refusé avec memory_min_too_low : le launcher lit désormais la vraie quantité de RAM au lieu de sa propre consommation, et 4096-8192 Mo s'enregistrent normalement."
   },
   "announcements": [
     {
