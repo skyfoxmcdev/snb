@@ -1006,11 +1006,14 @@ fn main() {
             let logger = Logger::new(data_dir.join("logs"))?;
             let settings_file = data_dir.join("settings.json");
             let mut settings = snb_core::util::read_json::<Settings>(&settings_file).unwrap_or_default();
+            let stored = settings.clone();
             let total = memory_stats::memory_stats()
                 .map(|stats| (stats.physical_mem / 1024 / 1024) as u64)
                 .unwrap_or(0);
             settings.normalize_loaded(total);
-            if !settings_file.exists() {
+            // Write a normalised file straight away, so an old 1 GiB allocation
+            // is corrected on disk before the player ever opens Settings.
+            if stored != settings || !settings_file.exists() {
                 write_json_atomic(&settings_file, &settings)?;
             }
             let loader = RemoteLoader::new(

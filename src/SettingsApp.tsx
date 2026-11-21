@@ -45,7 +45,7 @@ const copy = {
     dark: "Sombre", light: "Clair", system: "Système", french: "Français", english: "English",
     ledeLauncher: "Langue, thème et dossier d'installation.",
     ledeJava: "Le runtime Java 21 utilisé pour lancer Minecraft.",
-    ledePerformance: "Mémoire allouée et arguments de la JVM.",
+    ledePerformance: "Mémoire allouée (4096 à 8192 Mo) et arguments de la JVM.",
     ledeDisplay: "Fenêtre du jeu et arguments Minecraft.",
     ledeBackups: "Sauvegardes automatiques des mondes.",
     ledeFolders: "Accès direct aux dossiers de l'instance.",
@@ -73,7 +73,7 @@ const copy = {
     dark: "Dark", light: "Light", system: "System", french: "Français", english: "English",
     ledeLauncher: "Language, theme and installation folder.",
     ledeJava: "The Java 21 runtime used to start Minecraft.",
-    ledePerformance: "Allocated memory and JVM arguments.",
+    ledePerformance: "Allocated memory (4096 to 8192 MB) and JVM arguments.",
     ledeDisplay: "Game window and Minecraft arguments.",
     ledeBackups: "Automatic world backups.",
     ledeFolders: "Direct access to the instance folders.",
@@ -83,6 +83,11 @@ const copy = {
 };
 
 type Section = "profile" | "launcher" | "java" | "performance" | "display" | "backups" | "folders" | "about";
+
+// The shipped allocation range, mirroring MIN_MEMORY_MB / MAX_MEMORY_MB in
+// crates/snb-core/src/settings.rs. Anything outside it is clamped, never stored.
+const MIN_MEMORY_MB = 4096;
+const MAX_MEMORY_MB = 8192;
 
 function MemoryField({
   value,
@@ -110,11 +115,19 @@ function MemoryField({
       step={512}
       value={text}
       onChange={(event) => {
-        setText(event.target.value);
-        const parsed = Number.parseInt(event.target.value, 10);
-        if (Number.isFinite(parsed)) onChange(parsed);
+        const raw = event.target.value;
+        setText(raw);
+        const parsed = Number.parseInt(raw, 10);
+        // Intermediate keystrokes ("4", "40") stay in the box; only a value
+        // already inside the range reaches the draft.
+        if (Number.isFinite(parsed) && parsed >= min && parsed <= max) onChange(parsed);
       }}
-      onBlur={() => setText(String(value))}
+      onBlur={() => {
+        const parsed = Number.parseInt(text, 10);
+        const clamped = Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : value;
+        setText(String(clamped));
+        if (clamped !== value) onChange(clamped);
+      }}
     />
   );
 }
@@ -399,8 +412,8 @@ export default function SettingsApp() {
                 <div className="settings-control">
                   <MemoryField
                     value={draft.minMemoryMb}
-                    min={512}
-                    max={32768}
+                    min={MIN_MEMORY_MB}
+                    max={Math.max(draft.maxMemoryMb, MIN_MEMORY_MB)}
                     onChange={(value) => patch({ minMemoryMb: value })}
                   />
                 </div>
@@ -411,8 +424,8 @@ export default function SettingsApp() {
                 <div className="settings-control">
                   <MemoryField
                     value={draft.maxMemoryMb}
-                    min={1024}
-                    max={32768}
+                    min={Math.min(draft.minMemoryMb, MAX_MEMORY_MB)}
+                    max={MAX_MEMORY_MB}
                     onChange={(value) => patch({ maxMemoryMb: value })}
                   />
                 </div>

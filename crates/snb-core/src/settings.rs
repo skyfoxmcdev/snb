@@ -5,7 +5,13 @@ use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
 use crate::util::{default_game_dir, is_vanilla_minecraft_dir, username_is_valid};
 
-pub const SETTINGS_SCHEMA_VERSION: u32 = 2;
+pub const SETTINGS_SCHEMA_VERSION: u32 = 3;
+
+/// The launcher ships a 4 GiB minimum / 8 GiB maximum allocation. The same
+/// range is enforced on every load and save, so a value stored by an older
+/// build can never pull the allocation back down after the player saves.
+pub const MIN_MEMORY_MB: u32 = 4096;
+pub const MAX_MEMORY_MB: u32 = 8192;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -65,17 +71,6 @@ impl Settings {
     /// Normalises values loaded from disk without discarding a player's explicit
     /// choice. Used before the settings are handed to the UI.
     pub fn normalize_loaded(&mut self, total_memory_mb: u64) {
-        // Version 2 ships a 4 GiB minimum / 8 GiB maximum allocation instead of
-        // the old 1 GiB / 4 GiB pair, so settings written by 0.1.2 and earlier
-        // are lifted once. Values the player sets afterwards are never touched.
-        if self.schema_version == 1 {
-            if self.min_memory_mb < 4096 {
-                self.min_memory_mb = 4096;
-            }
-            if self.max_memory_mb < 8192 {
-                self.max_memory_mb = 8192;
-            }
-        }
         self.schema_version = SETTINGS_SCHEMA_VERSION;
         self.username = self.username.trim().to_string();
         self.game_dir = self.game_dir.trim().to_string();
@@ -88,26 +83,7 @@ impl Settings {
         if self.game_dir.is_empty() {
             self.game_dir = default_game_dir().to_string_lossy().to_string();
         }
-        if self.min_memory_mb < 512 {
-            self.min_memory_mb = 4096;
-        }
-        if self.max_memory_mb == 0 {
-            self.max_memory_mb = 8192;
-        }
-        if total_memory_mb > 0 {
-            // Allocating the machine's full memory is allowed; only values above
-            // it are reduced, so a save always keeps what the player asked for.
-            let cap = total_memory_mb.max(1024).min(u32::MAX as u64) as u32;
-            if self.max_memory_mb > cap {
-                self.max_memory_mb = cap;
-            }
-            if self.min_memory_mb > cap {
-                self.min_memory_mb = cap;
-            }
-        }
-        if self.min_memory_mb > self.max_memory_mb {
-            self.min_memory_mb = self.max_memory_mb;
-        }
+        self.clamp_memory(total_memory_mb);
         if self.width < 640 {
             self.width = 1280;
         }
@@ -125,6 +101,31 @@ impl Settings {
         }
         if !matches!(self.theme.as_str(), "dark" | "light" | "system") {
             self.theme = "system".to_string();
+        }
+    }
+
+    /// Keeps the allocation inside the shipped 4 GiB / 8 GiB range and inside
+    /// the machine's memory. A pair stored below the floor is replaced by the
+    /// shipped baseline instead of being kept, so an old 1 GiB default cannot
+    /// come back and swallow the next save.
+    fn clamp_memory(&mut self, total_memory_mb: u64) {
+        let ceiling = if total_memory_mb > 0 {
+            total_memory_mb.min(MAX_MEMORY_MB as u64).max(1024) as u32
+        } else {
+            MAX_MEMORY_MB
+        };
+        let floor = MIN_MEMORY_MB.min(ceiling);
+
+        if self.min_memory_mb < floor || self.max_memory_mb < floor {
+            self.min_memory_mb = floor;
+            self.max_memory_mb = ceiling;
+            return;
+        }
+        if self.max_memory_mb > ceiling {
+            self.max_memory_mb = ceiling;
+        }
+        if self.min_memory_mb > self.max_memory_mb {
+            self.min_memory_mb = self.max_memory_mb;
         }
     }
 
@@ -171,14 +172,14 @@ impl Settings {
         if !matches!(self.theme.as_str(), "dark" | "light" | "system") {
             return Err(AppError::new("theme_unsupported"));
         }
-        if self.min_memory_mb < 512 {
-            return Err(AppError::new("memory_min_too_low"));
+        if self.min_memory_mb < MIN_MEMORY_MB {
+            return Err(AppError::new("memory_min_too_low").param("minMb", MIN_MEMORY_MB.to_string()));
         }
         if self.max_memory_mb < self.min_memory_mb {
             return Err(AppError::new("memory_max_below_min"));
         }
-        if self.max_memory_mb < 1024 {
-            return Err(AppError::new("memory_max_too_low"));
+        if self.max_memory_mb > MAX_MEMORY_MB {
+            return Err(AppError::new("memory_max_too_high").param("maxMb", MAX_MEMORY_MB.to_string()));
         }
         if total_memory_mb > 0 && self.max_memory_mb as u64 > total_memory_mb.max(1024) {
             return Err(AppError::new("memory_exceeds_system").param(
@@ -265,7 +266,7 @@ mod tests {
     }
 
     #[test]
-    fn version_one_settings_get_the_new_memory_defaults_once() {
+    fn stored_memory_outside_the_shipped_range_is_lifted() {
         let mut legacy = Settings {
             schema_version: 1,
             min_memory_mb: 1024,
@@ -273,16 +274,35 @@ mod tests {
             ..Settings::default()
         };
         legacy.normalize_loaded(16_384);
-        assert_eq!(legacy.min_memory_mb, 4096);
-        assert_eq!(legacy.max_memory_mb, 8192);
+        assert_eq!(legacy.min_memory_mb, MIN_MEMORY_MB);
+        assert_eq!(legacy.max_memory_mb, MAX_MEMORY_MB);
         assert_eq!(legacy.schema_version, SETTINGS_SCHEMA_VERSION);
 
-        // A player who lowers the allocation afterwards keeps their choice.
-        legacy.max_memory_mb = 3072;
-        legacy.min_memory_mb = 2048;
+        // A 1 GiB pair written by an earlier build cannot come back after a save.
+        legacy.min_memory_mb = 1024;
+        legacy.max_memory_mb = 1024;
         legacy.normalize_loaded(16_384);
-        assert_eq!(legacy.min_memory_mb, 2048);
-        assert_eq!(legacy.max_memory_mb, 3072);
+        assert_eq!(legacy.min_memory_mb, MIN_MEMORY_MB);
+        assert_eq!(legacy.max_memory_mb, MAX_MEMORY_MB);
+
+        // Anything above the shipped maximum is reduced to it.
+        legacy.min_memory_mb = 32_768;
+        legacy.max_memory_mb = 32_768;
+        legacy.normalize_loaded(16_384);
+        assert_eq!(legacy.min_memory_mb, MAX_MEMORY_MB);
+        assert_eq!(legacy.max_memory_mb, MAX_MEMORY_MB);
+
+        // Choices inside the shipped range are kept.
+        legacy.min_memory_mb = MIN_MEMORY_MB;
+        legacy.max_memory_mb = 6_144;
+        legacy.normalize_loaded(16_384);
+        assert_eq!(legacy.min_memory_mb, MIN_MEMORY_MB);
+        assert_eq!(legacy.max_memory_mb, 6_144);
+
+        // A machine smaller than the shipped range still gets a usable pair.
+        legacy.normalize_loaded(2_048);
+        assert_eq!(legacy.min_memory_mb, 2_048);
+        assert_eq!(legacy.max_memory_mb, 2_048);
     }
 
     #[test]
@@ -303,9 +323,13 @@ mod tests {
         settings.max_memory_mb = 4096;
         assert_eq!(settings.validate(16_384).unwrap_err().code(), "memory_max_below_min");
         settings.min_memory_mb = 1024;
-        settings.max_memory_mb = 32_768;
-        assert_eq!(settings.validate(16_384).unwrap_err().code(), "memory_exceeds_system");
         settings.max_memory_mb = 8192;
+        assert_eq!(settings.validate(16_384).unwrap_err().code(), "memory_min_too_low");
+        settings.min_memory_mb = MIN_MEMORY_MB;
+        settings.max_memory_mb = 32_768;
+        assert_eq!(settings.validate(16_384).unwrap_err().code(), "memory_max_too_high");
+        settings.max_memory_mb = MAX_MEMORY_MB;
+        assert_eq!(settings.validate(4_096).unwrap_err().code(), "memory_exceeds_system");
         settings.width = 100;
         assert_eq!(settings.validate(16_384).unwrap_err().code(), "resolution_width_invalid");
     }
