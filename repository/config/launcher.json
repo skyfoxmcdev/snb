@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "latestVersion": "0.1.4",
-  "minimumVersion": "0.1.4",
+  "latestVersion": "0.1.5",
+  "minimumVersion": "0.1.5",
   "notes": {
-    "en": "Fixes the asset check that blocked installation with assets_missing, so Play unlocks again without reinstalling Minecraft.",
-    "fr": "Corrige la vérification des ressources qui bloquait l'installation avec assets_missing : le bouton Jouer se débloque sans réinstaller Minecraft."
+    "en": "Fixes the Java memory allocation that snapped back to 1024 MB after saving, and enforces the 4096-8192 MB range.",
+    "fr": "Corrige l'allocation de mémoire Java qui revenait à 1024 Mo après l'enregistrement et applique la plage 4096-8192 Mo."
   },
   "announcements": [
     {

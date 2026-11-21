@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "version": "0.1.4",
-  "minimumVersion": "0.1.4",
+  "version": "0.1.5",
+  "minimumVersion": "0.1.5",
   "mandatory": true,
-  "releasedAt": "2026-11-14T18:08:21Z",
+  "releasedAt": "2026-11-21T16:07:31Z",
   "notes": {
-    "en": "Fixes the asset check that blocked installation with assets_missing, so Play unlocks again without reinstalling Minecraft.",
-    "fr": "Corrige la vérification des ressources qui bloquait l'installation avec assets_missing : le bouton Jouer se débloque sans réinstaller Minecraft."
+    "en": "Fixes the Java memory allocation that snapped back to 1024 MB after saving, and enforces the 4096-8192 MB range.",
+    "fr": "Corrige l'allocation de mémoire Java qui revenait à 1024 Mo après l'enregistrement et applique la plage 4096-8192 Mo."
   },
   "platforms": {
     "windows-x86_64": {
-      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.4/Sky-and-Beyond_0.1.4_x64-setup.exe",
-      "sha256": "b6eafd7615730f0a34cb1ed153c2a8e619374c404a77b6fe70c3cba3efd63617",
-      "size": 8405631,
+      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.5/Sky-and-Beyond_0.1.5_x64-setup.exe",
+      "sha256": "ed9d68b460129a2f90fc3df6cfaf4a92330472a34835f4ad5e3c171e635c4be9",
+      "size": 8404939,
       "signature": null,
-      "fileName": "Sky-and-Beyond_0.1.4_x64-setup.exe"
+      "fileName": "Sky-and-Beyond_0.1.5_x64-setup.exe"
     }
   }
 }
