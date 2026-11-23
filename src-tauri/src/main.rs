@@ -8,8 +8,9 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use serde::Serialize;
+use snb_core::automodpack::ensure_automodpack;
 use snb_core::backups::{create_backup, list_backups, restore_backup};
-use snb_core::config::RuntimeConfig;
+use snb_core::config::{AutomodpackOverride, RuntimeConfig};
 use snb_core::diagnostics::create_diagnostics_archive;
 use snb_core::error::{AppError, UserError};
 use snb_core::instance::GamePaths;
@@ -23,6 +24,12 @@ use snb_core::settings::Settings;
 use snb_core::updater::{check as check_update, download_update, write_health_marker, UpdateCheck};
 use snb_core::util::{format_compact_utc, now_ms, write_json_atomic};
 use tauri::{AppHandle, Emitter, Manager, State};
+
+/// The custom AutoModpack build is compiled into the launcher, so every player
+/// gets the exact server-matched JAR without downloading it. A newer JAR can
+/// still be published in `launcher.json` (see `AutomodpackOverride`).
+const BUNDLED_AUTOMODPACK: &[u8] =
+    include_bytes!("../resources/AutoModpack-Custom-1.21.1-neoforge.jar");
 
 struct AppState {
     data_dir: PathBuf,
@@ -138,6 +145,34 @@ async fn bootstrap(state: State<'_, AppState>) -> Result<BootstrapPayload, UserE
             let _ = update_server_entry(&paths.root, &runtime.server_entry_name, endpoint, &state.logger);
         }
     }
+    // Keep the pinned AutoModpack build in sync before readiness is computed:
+    // a published JAR is downloaded and verified, otherwise the bundled JAR
+    // replaces any older or modified AutoModpack copy.
+    if paths.root.is_dir() {
+        let published = snapshot.launcher.automodpack.clone();
+        let cancel = AtomicBool::new(false);
+        match ensure_automodpack(
+            &runtime,
+            published.as_ref(),
+            BUNDLED_AUTOMODPACK,
+            &paths,
+            &cancel,
+            &state.logger,
+            &mut |_, _| {},
+        ) {
+            Ok(status) => state.logger.info(
+                "automodpack",
+                format!(
+                    "AutoModpack {} verified",
+                    status.pinned_version
+                ),
+            ),
+            Err(error) => state.logger.warn(
+                "automodpack",
+                format!("AutoModpack could not be synchronised: {error}"),
+            ),
+        }
+    }
     let server_status = snapshot
         .server
         .endpoint
@@ -241,10 +276,17 @@ async fn install_game(app: AppHandle, state: State<'_, AppState>, repair: bool) 
     let paths = game_paths(&state, &settings);
     let cancel = state.install_cancel.clone();
     let endpoint = endpoint(&state);
+    let published_automodpack: Option<AutomodpackOverride> = state
+        .remote
+        .lock()
+        .ok()
+        .and_then(|remote| remote.launcher.automodpack.clone());
     let emit_handle = app.clone();
     let (result, working) = tauri::async_runtime::spawn_blocking(move || {
         let report = install(
             &runtime,
+            published_automodpack.as_ref(),
+            BUNDLED_AUTOMODPACK,
             &paths,
             &mut working,
             endpoint.as_ref(),

@@ -85,7 +85,7 @@ pub fn check_readiness(
         .and_then(|version| version.asset_index.as_ref())
         .map(|index| assets_ready(paths, index))
         .unwrap_or(false);
-    let automodpack = detect(paths, &runtime.automodpack.version);
+    let automodpack = detect(paths, &runtime.automodpack.sha256, &runtime.automodpack.version);
     let automodpack_ok = automodpack.valid;
     let mut components = vec![
         component("instance", instance_ok, "missing", Some("instance_missing")),

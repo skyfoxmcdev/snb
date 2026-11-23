@@ -35,9 +35,9 @@ The launcher rewrites the entry named **Sky & Beyond** in `servers.dat`. Existin
 ## Mods
 
 - Disable moves the JAR to `mods-disabled`; it is never deleted by disabling.
-- AutoModpack JARs are protected and cannot be disabled/removed from the launcher.
+- AutoModpack JARs are protected and cannot be disabled/removed from the launcher. When the launcher starts it restores its own AutoModpack JAR and deletes any other AutoModpack copy, so a self-updated or manually replaced JAR returns to the launcher build.
 - Add only mods compatible with Minecraft 1.21.1 / NeoForge; the launcher deliberately does not block based on speculative compatibility checks.
-- If AutoModpack and a local mod disagree, remove/disable the local copy or ask the server owner. AutoModpack 4.0.7 does not offer pinned-mod-id support.
+- If AutoModpack and a local mod disagree, remove/disable the local copy or ask the server owner. The custom AutoModpack build does not offer pinned-mod-id support.
 - `.jar` files only. Invalid/corrupt mods may make Minecraft fail to start; inspect the game log.
 
 ## Shaders/resource packs

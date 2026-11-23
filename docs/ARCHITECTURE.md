@@ -32,7 +32,7 @@ A single installation orchestrator runs ten idempotent steps: prepare, Java, Min
 - `java`: detection, version parsing, Adoptium download, safe extraction, process execution with timeout/output limits.
 - `minecraft`: Mojang manifest/version model, inheritance merge, rules, libraries, assets, completion marker.
 - `neoforge`: checksum-verified official installer and generated profile validation.
-- `automodpack`: valid-JAR detection, protection, repair without touching AutoModpack config/packs.
+- `automodpack`: bundled custom JAR installation, SHA-256 build identification, replacement of stale AutoModpack copies (enabled or disabled), optional verified download of a published JAR, protection, without touching AutoModpack config/packs.
 - `launch`: placeholder resolution, classpath, offline profile, argument construction, process spawning.
 - `backups`: validated zip snapshots, retention, staging and transactional restore.
 - `diagnostics`: local redacted zip export.
@@ -61,4 +61,4 @@ Play verifies installation and Java, refreshes `servers.dat`, optionally creates
 
 - Minecraft/NeoForge version changes require code-level testing; the runtime configuration is intentionally internal.
 - Windows is the only initially packaged platform. Linux/macOS still need bundle targets, platform installers and updater command adaptation.
-- AutoModpack 4.0.7 does not expose pinned mod IDs; local/server conflict prevention is not claimed.
+- The custom AutoModpack build does not expose pinned mod IDs; local/server conflict prevention is not claimed.

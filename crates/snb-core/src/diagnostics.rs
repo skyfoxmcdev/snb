@@ -107,7 +107,7 @@ pub fn create_diagnostics_archive(
         runtime.java_major,
     );
     let instance = read_instance(&paths.root);
-    let automodpack = detect(paths, &runtime.automodpack.version);
+    let automodpack = detect(paths, &runtime.automodpack.sha256, &runtime.automodpack.version);
     let readiness = check_readiness(runtime, paths, settings, None);
     let report = serde_json::json!({
         "schemaVersion": 1,

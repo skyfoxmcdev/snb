@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { IconArchive, IconChat, IconGear, IconGlobe, IconLayers, IconLifeBuoy, IconPackage } from "./Icons";
+import { IconArchive, IconChat, IconGear, IconGlobe, IconLayers, IconPackage } from "./Icons";
 
 interface IconRailProps {
   onSettings: () => void;
@@ -7,14 +7,13 @@ interface IconRailProps {
   onContent: () => void;
   onBackups: () => void;
   onOpenUrl: (url: string) => void;
-  links: { website?: string; discord?: string; support?: string };
+  links: { website?: string; discord?: string };
 }
 
 export function IconRail({ onSettings, onMods, onContent, onBackups, onOpenUrl, links }: IconRailProps) {
   const community = [
     links.website ? { id: "website", label: "Website", url: links.website, icon: <IconGlobe size={21} /> } : null,
     links.discord ? { id: "discord", label: "Discord", url: links.discord, icon: <IconChat size={21} /> } : null,
-    links.support ? { id: "support", label: "Support", url: links.support, icon: <IconLifeBuoy size={21} /> } : null,
   ].filter(Boolean) as { id: string; label: string; url: string; icon: ReactNode }[];
 
   return (

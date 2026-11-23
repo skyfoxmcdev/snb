@@ -12,10 +12,9 @@
   "javaMajor": 21,
   "adoptiumApiBase": "https://api.adoptium.net/v3/assets/latest/21/hotspot",
   "automodpack": {
-    "version": "4.0.7",
-    "url": "https://github.com/Skidamek/AutoModpack/releases/download/v4.0.7/automodpack-mc1.21.1-neoforge-4.0.7.jar",
-    "sha256": "c76ac8e4c754ba39d1baee3a8ac146be9bfddfad58fa10cc48527d4accd47ce7",
-    "fileName": "automodpack-mc1.21.1-neoforge-4.0.7.jar"
+    "version": "custom-1.21.1",
+    "sha256": "228f57cf40c1c26b5e04f827ac5e6e9632792dfdbf1eaebee1e73998ab6610cf",
+    "fileName": "AutoModpack-Custom-1.21.1-neoforge.jar"
   },
   "update": {
     "channel": "stable",

@@ -540,7 +540,6 @@ export default function App() {
               links={{
                 website: boot.remote?.launcher?.links?.website,
                 discord: boot.remote?.launcher?.links?.discord,
-                support: boot.remote?.launcher?.links?.support,
               }}
             />
 

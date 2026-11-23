@@ -5,7 +5,7 @@ use std::sync::Arc;
 use serde::Serialize;
 
 use crate::automodpack::ensure_automodpack;
-use crate::config::{RuntimeConfig, ServerEndpoint};
+use crate::config::{AutomodpackOverride, RuntimeConfig, ServerEndpoint};
 use crate::error::{AppError, UserError};
 use crate::instance::{ensure_instance, GamePaths};
 use crate::java::{ensure_java, JavaReport};
@@ -196,6 +196,8 @@ fn update_progress(
 /// real work; the function returns a failed report (never a fake success).
 pub fn install(
     runtime: &RuntimeConfig,
+    published_automodpack: Option<&AutomodpackOverride>,
+    bundled_automodpack: &[u8],
     paths: &GamePaths,
     settings: &mut Settings,
     endpoint: Option<&ServerEndpoint>,
@@ -353,6 +355,8 @@ pub fn install(
     };
     let automodpack_result = ensure_automodpack(
         runtime,
+        published_automodpack,
+        bundled_automodpack,
         paths,
         cancel,
         logger,

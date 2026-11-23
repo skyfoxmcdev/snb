@@ -8,7 +8,7 @@ Official desktop launcher for the **Sky & Beyond** Minecraft server. It installs
 - First-run wizard: username, installation directory, then real step-by-step installation.
 - Automatic Java 21 detection or Eclipse Temurin JRE download from Adoptium.
 - Official Mojang metadata and checksums; the official NeoForge installer creates the loader profile.
-- AutoModpack 4.0.7 installed and protected. Server modpack synchronisation is left entirely to AutoModpack.
+- Custom AutoModpack 1.21.1 build bundled inside the launcher and protected. A newer JAR can be published in the remote configuration and is downloaded, verified and installed automatically; older AutoModpack copies are replaced. Server modpack synchronisation is left entirely to AutoModpack.
 - French and English, dark and light themes, local preferences.
 - Mods, shaders and resource packs with add/remove/disable; AutoModpack files cannot be disabled or removed.
 - Verified zip backups of all worlds, configurable retention, restore with confirmation and a safety snapshot.

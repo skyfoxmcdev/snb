@@ -57,13 +57,29 @@ It must never publish, log or return the origin IP. Keep origin credentials off 
 | `notes` | localized | Release notes. |
 | `announcements` | array | Up to 10. See below. |
 | `buttons` | array | Up to 6 custom external buttons. |
-| `links` | object | Optional `discord`, `website`, `support` HTTPS URLs. |
+| `links` | object | Optional `discord` and `website` HTTPS URLs. |
+| `automodpack` | object | Optional newer AutoModpack JAR (see below). |
 | `maintenance.active` | boolean | Launcher maintenance notice. |
 | `maintenance.message` | localized | Maintenance text. |
 
 Announcement fields: `id`, `level` (`info`, `important`, `maintenance`, `event`, `warning`), `title`, `body`, optional `startsAt`, `endsAt`, `link`, and `dismissible`. Duplicate IDs are removed. Links must be HTTPS.
 
 Button fields: `id`, `label` (localized), `url` (HTTPS), `icon` (short name), `style` (`primary` or `secondary`).
+
+### automodpack
+
+Publishes an AutoModpack JAR that supersedes the build bundled in the launcher:
+
+```json
+"automodpack": {
+  "version": "custom-1.21.1-2",
+  "url": "https://example.com/AutoModpack-Custom-1.21.1-neoforge.jar",
+  "sha256": "<64 hex characters>",
+  "fileName": "AutoModpack-Custom-1.21.1-neoforge.jar"
+}
+```
+
+The launcher hashes the installed JAR at startup; if it differs it downloads this URL, verifies size/SHA-256 and the NeoForge mod manifest, then removes older AutoModpack JARs. A failed download falls back to the bundled JAR. Entries with a non-HTTPS URL, a malformed hash or an unsafe file name are ignored entirely.
 
 ## appearance.json
 

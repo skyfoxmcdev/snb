@@ -28,15 +28,14 @@
         "en": "Website",
         "fr": "Site web"
       },
-      "url": "https://example.com/",
+      "url": "https://snb.ct.ws",
       "icon": "external",
       "style": "secondary"
     }
   ],
   "links": {
-    "discord": "https://discord.gg/change-me",
-    "website": "https://example.com/",
-    "support": "https://example.com/support"
+    "discord": "https://discord.com/invite/HWgBzwZbr3",
+    "website": "https://snb.ct.ws"
   },
   "maintenance": {
     "active": false,

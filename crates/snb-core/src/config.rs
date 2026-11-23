@@ -335,6 +335,7 @@ pub struct LauncherInfo {
     pub announcements: Vec<Announcement>,
     pub buttons: Vec<RemoteButton>,
     pub links: RemoteLinks,
+    pub automodpack: Option<AutomodpackOverride>,
     pub maintenance: MaintenanceState,
 }
 
@@ -348,6 +349,7 @@ impl Default for LauncherInfo {
             announcements: Vec::new(),
             buttons: Vec::new(),
             links: RemoteLinks::default(),
+            automodpack: None,
             maintenance: MaintenanceState::default(),
         }
     }
@@ -414,6 +416,7 @@ impl LauncherInfo {
         self.notes.clean(MAX_BODY);
         self.maintenance.message.clean(MAX_DESCRIPTION);
         self.links.clean();
+        self.automodpack = self.automodpack.take().and_then(AutomodpackOverride::validated);
 
         self.announcements.truncate(10);
         let mut seen = std::collections::HashSet::new();
@@ -786,11 +789,13 @@ impl Default for NeoForgeRuntime {
     }
 }
 
+/// The AutoModpack build compiled into the launcher. `sha256` identifies the
+/// exact JAR, so rebuilding the launcher with another JAR replaces the
+/// installed copy instead of leaving a stale mod behind.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AutoModpackRuntime {
     pub version: String,
-    pub url: String,
     pub sha256: String,
     pub file_name: String,
 }
@@ -798,11 +803,55 @@ pub struct AutoModpackRuntime {
 impl Default for AutoModpackRuntime {
     fn default() -> Self {
         Self {
-            version: "4.0.7".to_string(),
-            url: "https://github.com/Skidamek/AutoModpack/releases/download/v4.0.7/automodpack-mc1.21.1-neoforge-4.0.7.jar".to_string(),
-            sha256: "c76ac8e4c754ba39d1baee3a8ac146be9bfddfad58fa10cc48527d4accd47ce7".to_string(),
-            file_name: "automodpack-mc1.21.1-neoforge-4.0.7.jar".to_string(),
+            version: "custom-1.21.1".to_string(),
+            sha256: "228f57cf40c1c26b5e04f827ac5e6e9632792dfdbf1eaebee1e73998ab6610cf".to_string(),
+            file_name: "AutoModpack-Custom-1.21.1-neoforge.jar".to_string(),
         }
+    }
+}
+
+/// Optional newer AutoModpack JAR published in `launcher.json`. When present
+/// the launcher downloads, verifies and installs it instead of the bundled
+/// build, so publishing a new JAR does not require a new launcher installer.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct AutomodpackOverride {
+    pub version: String,
+    pub url: String,
+    pub sha256: String,
+    pub file_name: String,
+}
+
+impl Default for AutomodpackOverride {
+    fn default() -> Self {
+        Self {
+            version: String::new(),
+            url: String::new(),
+            sha256: String::new(),
+            file_name: String::new(),
+        }
+    }
+}
+
+impl AutomodpackOverride {
+    fn validated(mut self) -> Option<Self> {
+        self.version = truncate_chars(&self.version, 40);
+        let url = clean_https_url(Some(self.url))?;
+        let sha256 = self.sha256.trim().to_ascii_lowercase();
+        if sha256.len() != 64 || !sha256.chars().all(|c| c.is_ascii_hexdigit()) {
+            return None;
+        }
+        let file_name = sanitize_file_name(&self.file_name).ok()?;
+        if !file_name.to_ascii_lowercase().ends_with(".jar") {
+            return None;
+        }
+        if self.version.is_empty() {
+            self.version = "published".to_string();
+        }
+        self.url = url;
+        self.sha256 = sha256;
+        self.file_name = file_name;
+        Some(self)
     }
 }
 
@@ -892,9 +941,6 @@ impl RuntimeConfig {
         })?;
         validate_url(&self.neoforge.maven_base, false).map_err(|_| {
             AppError::with_detail("runtime_config_invalid", "neoforge.mavenBase must be HTTPS")
-        })?;
-        validate_url(&self.automodpack.url, false).map_err(|_| {
-            AppError::with_detail("runtime_config_invalid", "automodpack.url must be HTTPS")
         })?;
         validate_url(&self.adoptium_api_base, false).map_err(|_| {
             AppError::with_detail("runtime_config_invalid", "adoptiumApiBase must be HTTPS")
@@ -1142,6 +1188,31 @@ mod tests {
     }
 
     #[test]
+    fn published_automodpack_override_is_validated() {
+        let info: LauncherInfo = serde_json::from_str(
+            r#"{
+                "automodpack": {
+                    "version": "custom-1.21.1-2",
+                    "url": "https://example.com/AutoModpack-Custom.jar",
+                    "sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                    "fileName": "AutoModpack-Custom.jar"
+                }
+            }"#,
+        )
+        .unwrap();
+        let info = info.validate().unwrap();
+        let published = info.automodpack.unwrap();
+        assert_eq!(published.sha256, "a".repeat(64));
+        assert_eq!(published.file_name, "AutoModpack-Custom.jar");
+
+        let rejected: LauncherInfo = serde_json::from_str(
+            r#"{"automodpack":{"version":"x","url":"http://example.com/a.jar","sha256":"abc","fileName":"../a.jar"}}"#,
+        )
+        .unwrap();
+        assert!(rejected.validate().unwrap().automodpack.is_none());
+    }
+
+    #[test]
     fn runtime_config_is_validated() {
         let config = RuntimeConfig::default();
         assert!(config.validate(true).is_ok());
@@ -1187,6 +1258,6 @@ mod tests {
         assert_eq!(config.minecraft.version, "1.21.1");
         assert_eq!(config.neoforge.version, "21.1.248");
         assert_eq!(config.java_major, 21);
-        assert_eq!(config.automodpack.version, "4.0.7");
+        assert_eq!(config.automodpack.version, "custom-1.21.1");
     }
 }

@@ -25,7 +25,7 @@ Edit `src-tauri/resources/launcher-config.json` before building:
 | `neoforge.mavenBase` | Official NeoForge Maven base. |
 | `javaMajor` | Required major Java version (`21`). |
 | `adoptiumApiBase` | Official Adoptium API base. |
-| `automodpack.version/url/sha256/fileName` | Pinned AutoModpack artifact. |
+| `automodpack.version/sha256/fileName` | Bundled custom AutoModpack JAR (`src-tauri/resources/`). The SHA-256 identifies the build and replaces older copies. |
 | `update.channel` | `stable` or `beta`. Stable reads `launcher/update-manifest.json`. |
 | `update.publicKey` | Optional raw 32-byte Ed25519 public key in base64. Empty means SHA-256-only updates. |
 | `serverEntryName` | Name of the multiplayer entry (`Sky & Beyond`). |
@@ -119,9 +119,24 @@ If the update service itself is unavailable, the launcher blocks normal use with
 
 ## 8. AutoModpack
 
-The launcher installs the pinned AutoModpack JAR into `mods/` and never modifies `automodpack/` configuration or downloaded packs. AutoModpack may update itself or synchronize the server version; the launcher preserves any valid AutoModpack JAR even if its version differs. Missing or corrupt JARs are repaired. Launcher-managed AutoModpack files are protected from the mod UI.
+The custom AutoModpack JAR is compiled into the launcher (`src-tauri/resources/AutoModpack-Custom-1.21.1-neoforge.jar`, identified by `automodpack.sha256` in `launcher-config.json`), so it is never downloaded during installation. At every startup and every install the launcher writes that JAR to `mods/` and removes every other AutoModpack JAR, including old copies in `mods-disabled/`. A JAR whose bytes differ from the expected build (an older version, a corrupt file or an AutoModpack self-update) is replaced. `automodpack/` configuration and downloaded packs are never modified, and launcher-managed AutoModpack files stay protected from the mod UI.
 
-AutoModpack 4.0.7 has **no pinned-mod-id feature**. Do not claim in-game that client-side mod conflicts are automatically prevented. Document conflicts to players; server-side AutoModpack remains authoritative for synchronised mods.
+### Publishing a new AutoModpack JAR without a launcher release
+
+Add an `automodpack` object to `repository/config/launcher.json` and upload the JAR to a public HTTPS URL (for example the Pages site or a GitHub release):
+
+```json
+"automodpack": {
+  "version": "custom-1.21.1-2",
+  "url": "https://skyfoxmcdev.github.io/snb/launcher/AutoModpack-Custom-1.21.1-neoforge.jar",
+  "sha256": "<64 hex characters>",
+  "fileName": "AutoModpack-Custom-1.21.1-neoforge.jar"
+}
+```
+
+The launcher compares the installed JAR with `sha256` at startup, downloads the file when it differs, verifies size/SHA-256 and JAR structure, then replaces the old copy. If the download fails, the bundled JAR is used instead. Invalid entries (non-HTTPS URL, bad hash, unsafe file name) are ignored. Remove the object to fall back to the bundled build.
+
+The custom build has **no pinned-mod-id feature**. Do not claim in-game that client-side mod conflicts are automatically prevented. Document conflicts to players; server-side AutoModpack remains authoritative for synchronised mods.
 
 ## 9. Privacy and security checklist
 
