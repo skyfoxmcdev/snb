@@ -90,30 +90,46 @@ fn all_candidates(paths: &GamePaths) -> Vec<PathBuf> {
 pub fn detect(paths: &GamePaths, expected_sha256: &str, pinned_version: &str) -> AutomodpackStatus {
     let files = candidates(paths);
     let installed = !files.is_empty();
+    let mut first_valid: Option<(PathBuf, String)> = None;
     for path in &files {
-        if jar_is_valid(path) {
-            let name = path
-                .file_name()
-                .and_then(|name| name.to_str())
-                .unwrap_or_default()
-                .to_string();
-            let up_to_date = sha256_file(path)
-                .map(|digest| digest.eq_ignore_ascii_case(expected_sha256.trim()))
-                .unwrap_or(false);
+        if !jar_is_valid(path) {
+            continue;
+        }
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or_default()
+            .to_string();
+        let up_to_date = sha256_file(path)
+            .map(|digest| digest.eq_ignore_ascii_case(expected_sha256.trim()))
+            .unwrap_or(false);
+        // An up-to-date JAR wins even when an older AutoModpack copy sorts
+        // before it, otherwise the expected build would look outdated.
+        if up_to_date {
             return AutomodpackStatus {
                 installed,
                 valid: true,
-                up_to_date,
+                up_to_date: true,
                 path: Some(path.to_string_lossy().to_string()),
                 version: version_from_name(&name),
                 pinned_version: pinned_version.to_string(),
-                message_code: if up_to_date {
-                    None
-                } else {
-                    Some("automodpack_outdated".to_string())
-                },
+                message_code: None,
             };
         }
+        if first_valid.is_none() {
+            first_valid = Some((path.clone(), name));
+        }
+    }
+    if let Some((path, name)) = first_valid {
+        return AutomodpackStatus {
+            installed,
+            valid: true,
+            up_to_date: false,
+            path: Some(path.to_string_lossy().to_string()),
+            version: version_from_name(&name),
+            pinned_version: pinned_version.to_string(),
+            message_code: Some("automodpack_outdated".to_string()),
+        };
     }
     AutomodpackStatus {
         installed,
@@ -158,8 +174,16 @@ fn commit_jar(
     fs::rename(temp, destination)?;
     // Stale launcher-managed copies are removed only after the new JAR is in
     // place. AutoModpack's configuration and synced packs are untouched.
+    remove_other_jars(paths, destination, logger);
+    Ok(())
+}
+
+/// Deletes every AutoModpack JAR except the one that must load. AutoModpack's
+/// own updater can leave another JAR next to the pinned build, and two
+/// AutoModpack mods in `mods/` cannot load together.
+fn remove_other_jars(paths: &GamePaths, keep: &Path, logger: &Arc<Logger>) {
     for path in all_candidates(paths) {
-        if path == destination {
+        if path == keep {
             continue;
         }
         if let Some(name) = path.file_name().and_then(|name| name.to_str()) {
@@ -170,7 +194,6 @@ fn commit_jar(
         }
         let _ = fs::remove_file(&path);
     }
-    Ok(())
 }
 
 fn install_bundled(
@@ -187,6 +210,9 @@ fn install_bundled(
     let expected = runtime.automodpack.sha256.trim().to_ascii_lowercase();
     let status = detect(paths, &expected, &runtime.automodpack.version);
     if status.up_to_date {
+        if let Some(current) = status.path.as_deref() {
+            remove_other_jars(paths, Path::new(current), logger);
+        }
         progress(1, 1);
         return Ok(status);
     }
@@ -234,6 +260,9 @@ fn install_published(
     let expected = published.sha256.trim().to_ascii_lowercase();
     let status = detect(paths, &expected, &published.version);
     if status.up_to_date {
+        if let Some(current) = status.path.as_deref() {
+            remove_other_jars(paths, Path::new(current), logger);
+        }
         progress(1, 1);
         return Ok(status);
     }
@@ -459,6 +488,49 @@ mod tests {
         )
         .unwrap();
         assert!(again.up_to_date);
+    }
+
+    #[test]
+    fn removes_an_extra_automodpack_jar_next_to_the_expected_build() {
+        let dir = tempfile::tempdir().unwrap();
+        let bundled = jar_bytes("custom-1.21.1");
+        let runtime = runtime_for(&bundled);
+        let paths = GamePaths::new(dir.path(), &runtime);
+        fs::create_dir_all(&paths.mods).unwrap();
+        fs::write(
+            paths
+                .mods
+                .join("AutoModpack-Custom-1.21.1-neoforge.jar"),
+            &bundled,
+        )
+        .unwrap();
+        write_jar(
+            &paths
+                .mods
+                .join("automodpack-mc1.21.1-neoforge-4.0.7.jar"),
+            "4.0.7",
+        );
+        let logger = Logger::new(dir.path().join("logs")).unwrap();
+        let cancel = AtomicBool::new(false);
+        let status = ensure_automodpack(
+            &runtime,
+            None,
+            &bundled,
+            &paths,
+            &cancel,
+            &logger,
+            &mut |_, _| {},
+        )
+        .unwrap();
+        assert!(status.up_to_date);
+        assert!(!paths
+            .mods
+            .join("automodpack-mc1.21.1-neoforge-4.0.7.jar")
+            .exists());
+        assert!(paths
+            .mods
+            .join("AutoModpack-Custom-1.21.1-neoforge.jar")
+            .is_file());
     }
 
     #[test]
