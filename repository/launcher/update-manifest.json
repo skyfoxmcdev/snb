@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "version": "0.1.7",
-  "minimumVersion": "0.1.7",
+  "version": "0.1.8",
+  "minimumVersion": "0.1.8",
   "mandatory": true,
-  "releasedAt": "2026-11-23T18:34:00Z",
+  "releasedAt": "2026-11-23T18:49:43Z",
   "notes": {
     "en": "The launcher now ships the custom AutoModpack 1.21.1 build, replaces any older AutoModpack mod (including a copy AutoModpack updated itself) and can pick up a newly published JAR without a new launcher release. The Discord invite and the website now point to the correct places, and the redundant support shortcut was removed.",
     "fr": "Le launcher inclut désormais la version personnalisée d'AutoModpack 1.21.1, remplace tout mod AutoModpack plus ancien (y compris une copie mise à jour par AutoModpack lui-même) et peut récupérer un nouveau JAR publié sans nouvelle version du launcher. L'invitation Discord et le site pointent maintenant aux bonnes adresses, et le raccourci support redondant a été retiré."
   },
   "platforms": {
     "windows-x86_64": {
-      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.7/Sky-and-Beyond_0.1.7_x64-setup.exe",
-      "sha256": "5977a88fe99306c1d92fc288105641472a9bae1607376ae82448580107beacf7",
-      "size": 23364596,
+      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.8/Sky-and-Beyond_0.1.8_x64-setup.exe",
+      "sha256": "cb0e18a543bc9f8df988225f1f71f8db0653aa03bec2a992e8e96ff06b40baf0",
+      "size": 23364479,
       "signature": null,
-      "fileName": "Sky-and-Beyond_0.1.7_x64-setup.exe"
+      "fileName": "Sky-and-Beyond_0.1.8_x64-setup.exe"
     }
   }
 }
