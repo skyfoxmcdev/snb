@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "version": "0.1.6",
-  "minimumVersion": "0.1.6",
+  "version": "0.1.7",
+  "minimumVersion": "0.1.7",
   "mandatory": true,
-  "releasedAt": "2026-11-21T16:22:39Z",
+  "releasedAt": "2026-11-23T18:34:00Z",
   "notes": {
-    "en": "Fixes the memory setting that was capped to 1024 MB and rejected with memory_min_too_low: the launcher now reads the real amount of RAM instead of its own working set, so 4096-8192 MB saves normally.",
-    "fr": "Corrige le réglage de mémoire bloqué à 1024 Mo et refusé avec memory_min_too_low : le launcher lit désormais la vraie quantité de RAM au lieu de sa propre consommation, et 4096-8192 Mo s'enregistrent normalement."
+    "en": "The launcher now ships the custom AutoModpack 1.21.1 build, replaces any older AutoModpack mod (including a copy AutoModpack updated itself) and can pick up a newly published JAR without a new launcher release. The Discord invite and the website now point to the correct places, and the redundant support shortcut was removed.",
+    "fr": "Le launcher inclut désormais la version personnalisée d'AutoModpack 1.21.1, remplace tout mod AutoModpack plus ancien (y compris une copie mise à jour par AutoModpack lui-même) et peut récupérer un nouveau JAR publié sans nouvelle version du launcher. L'invitation Discord et le site pointent maintenant aux bonnes adresses, et le raccourci support redondant a été retiré."
   },
   "platforms": {
     "windows-x86_64": {
-      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.6/Sky-and-Beyond_0.1.6_x64-setup.exe",
-      "sha256": "1e0426119a1ef0c991aa61189fffd40f64c8c4f5b407a24da81b86f2cb2b7536",
-      "size": 8403834,
+      "url": "https://github.com/skyfoxmcdev/snb/releases/download/v0.1.7/Sky-and-Beyond_0.1.7_x64-setup.exe",
+      "sha256": "5977a88fe99306c1d92fc288105641472a9bae1607376ae82448580107beacf7",
+      "size": 23364596,
       "signature": null,
-      "fileName": "Sky-and-Beyond_0.1.6_x64-setup.exe"
+      "fileName": "Sky-and-Beyond_0.1.7_x64-setup.exe"
     }
   }
 }
